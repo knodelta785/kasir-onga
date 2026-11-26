@@ -112,17 +112,36 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .bars .bar span{font-size:11px; color:var(--muted); white-space:nowrap}
 .bars .bar b{font-size:11px}
 
-/* Gerbang masuk / daftar (multi-toko) */
-.authgate{position:fixed; inset:0; z-index:300; background:var(--bg); display:none; align-items:flex-start; justify-content:center; overflow:auto; padding:28px 14px}
+/* Gerbang masuk / daftar (multi-toko) — tampilan premium */
+.authgate{position:fixed; inset:0; z-index:300; display:none; align-items:flex-start; justify-content:center; overflow:auto; padding:36px 16px 26px;
+  background:
+    radial-gradient(560px 340px at 88% -60px, rgba(255,255,255,.22), rgba(255,255,255,0) 60%),
+    radial-gradient(480px 320px at -12% 108%, rgba(255,255,255,.13), rgba(255,255,255,0) 60%),
+    linear-gradient(160deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 58%, #0b1220) 82%)}
 .authgate.show{display:flex}
-.authgate .box{width:100%; max-width:400px; background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:22px 18px; box-shadow:var(--shadow)}
-.authgate .logo{font-size:24px; font-weight:800; text-align:center}
-.authgate .tag{text-align:center; color:var(--muted); margin:4px 0 16px}
-.authtabs{display:flex; gap:8px; margin-bottom:14px}
-.authtabs button{flex:1; padding:10px; border-radius:10px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-weight:700; cursor:pointer}
-.authtabs button.on{background:var(--accent); color:#fff; border-color:var(--accent)}
+.authgate .wrap{width:100%; max-width:400px}
+.authgate .brandmark{width:74px; height:74px; margin:0 auto 12px; border-radius:23px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(145deg, rgba(255,255,255,.30), rgba(255,255,255,.06));
+  border:1px solid rgba(255,255,255,.45); box-shadow:0 14px 30px rgba(2,6,23,.35), inset 0 1px 0 rgba(255,255,255,.55)}
+.authgate .logo{font-size:27px; font-weight:800; text-align:center; color:#fff; letter-spacing:.2px}
+.authgate .tag{text-align:center; color:rgba(255,255,255,.88); margin:5px 0 20px; font-size:14.5px}
+.authgate .box{width:100%; background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:20px 18px 16px; box-shadow:0 24px 48px rgba(2,6,23,.35)}
+.authtabs{display:flex; gap:4px; margin-bottom:16px; background:var(--surface2); border:1px solid var(--border); border-radius:999px; padding:4px}
+.authtabs button{flex:1; padding:10px; border-radius:999px; border:none; background:transparent; color:var(--muted); font-weight:700; cursor:pointer; font-size:14.5px}
+.authtabs button.on{background:var(--accent); color:#fff; box-shadow:0 4px 10px rgba(2,6,23,.18)}
 .autherr{background:#fdecea; color:#a4261f; border-radius:10px; padding:9px 11px; font-size:13.5px; margin-bottom:10px; display:none}
 html[data-theme="dark"] .autherr{background:#3a2320; color:#ff9d94}
+.authgate label{margin:0 0 5px}
+.field{position:relative; margin-bottom:12px}
+.field svg{position:absolute; left:12px; top:50%; transform:translateY(-50%); width:19px; height:19px; stroke:var(--muted); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; pointer-events:none}
+.field input{padding-left:40px; border-radius:12px}
+.field input:disabled{opacity:.55}
+#authSubmit{background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 68%, #000)); border:none; color:#fff; border-radius:14px; box-shadow:0 10px 22px color-mix(in srgb, var(--accent) 45%, transparent)}
+.authgate .skiplink{color:var(--accent); font-weight:600; text-decoration:none}
+.authfeats{display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin-top:18px; color:rgba(255,255,255,.94); font-size:12.5px; font-weight:600}
+.authfeats .f{display:flex; align-items:center; gap:6px}
+.authfeats svg{width:16px; height:16px; stroke:#fff; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+.authfoot{text-align:center; color:rgba(255,255,255,.65); font-size:12px; margin-top:14px}
 
 @media print{
   body *{visibility:hidden}
@@ -316,31 +335,54 @@ html[data-theme="dark"] .autherr{background:#3a2320; color:#ff9d94}
       </div>
       <hr style="border:none; border-top:1px solid var(--border); margin:18px 0">
       <p class="small muted">Database: bila Firebase terhubung (indikator "Real-time aktif" di atas), data tersinkron real-time antar semua perangkat (web &amp; APK) dan tersimpan di proyek Firebase milikmu; perubahan offline akan terkirim saat online lagi. Bila indikator "Mode lokal", data hanya tersimpan di perangkat ini. Cetak struk memakai sistem cetak perangkat. Untuk printer Bluetooth, hubungkan printer ke HP dan pilih saat dialog cetak muncul.</p>
-      <button class="btn red block" id="resetData">Hapus Semua Data &amp; Kembalikan Contoh</button>
+      <h3 style="margin:18px 0 6px">Reset Data</h3>
+      <p class="small muted" style="margin-top:0">Mulai bersih tanpa data contoh/lama. Reset berlaku untuk akun toko ini dan tersinkron ke semua perangkat — data yang dihapus tidak bisa dikembalikan.</p>
+      <button class="btn block" id="resetTx" style="margin-bottom:8px">Hapus Semua Transaksi (produk &amp; stok tetap)</button>
+      <button class="btn red block" id="resetAll">Mulai dari Nol — Hapus Transaksi &amp; Produk</button>
     </div>
   </section>
 </main>
 
 <!-- ================= GERBANG MASUK / DAFTAR (MULTI-TOKO) ================= -->
 <div class="authgate" id="authGate">
-  <div class="box">
-    <div class="logo">Kasir Onga</div>
-    <p class="tag">Satu akun untuk satu toko. Data tokomu tersinkron real-time di semua perangkatmu.</p>
-    <div class="authtabs">
-      <button id="tabLogin" class="on" type="button">Masuk</button>
-      <button id="tabRegister" type="button">Daftar Toko Baru</button>
+  <div class="wrap">
+    <div class="brandmark">
+      <svg width="37" height="37" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v17.2l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 20.2Z"/><path d="M9.3 8h5.4M9.3 12h5.4"/></svg>
     </div>
-    <div class="autherr" id="authErr"></div>
-    <label>Nama toko <span class="muted">(khusus daftar)</span></label>
-    <input id="authShop" placeholder="cth: Jajan Frozen Food" style="margin-bottom:10px" disabled>
-    <label>Email</label>
-    <input id="authEmail" type="email" placeholder="email@toko.com" style="margin-bottom:10px">
-    <label>Password</label>
-    <input id="authPass" type="password" placeholder="Minimal 6 karakter" style="margin-bottom:14px">
-    <button class="btn block" id="authSubmit" style="padding:14px; font-size:16px">Masuk</button>
-    <p class="small muted" style="text-align:center; margin-top:14px">
-      <a href="#" id="authLocal">Lewati — pakai data lokal perangkat ini saja</a>
-    </p>
+    <div class="logo">Kasir Onga</div>
+    <p class="tag">Satu akun, semua perangkat.</p>
+    <div class="box">
+      <div class="authtabs">
+        <button id="tabLogin" class="on" type="button">Masuk</button>
+        <button id="tabRegister" type="button">Daftar Toko Baru</button>
+      </div>
+      <div class="autherr" id="authErr"></div>
+      <label for="authShop">Nama toko</label>
+      <div class="field">
+        <svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 9.8V20h12V9.8"/><path d="M10 20v-5h4v5"/></svg>
+        <input id="authShop" placeholder="Nama tokomu" disabled>
+      </div>
+      <label for="authEmail">Email</label>
+      <div class="field">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m4 7.5 8 6 8-6"/></svg>
+        <input id="authEmail" type="email" placeholder="email@toko.com">
+      </div>
+      <label for="authPass">Password</label>
+      <div class="field">
+        <svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
+        <input id="authPass" type="password" placeholder="Min. 6 karakter">
+      </div>
+      <button class="btn block" id="authSubmit" style="padding:14px; font-size:16px; margin-top:4px">Masuk</button>
+      <p class="small muted" style="text-align:center; margin:14px 0 2px">
+        <a href="#" id="authLocal" class="skiplink">Lewati — mode lokal saja</a>
+      </p>
+    </div>
+    <div class="authfeats">
+      <span class="f"><svg viewBox="0 0 24 24"><path d="M13 2.5 4.5 13.5H11L9.8 21.5 18.5 10H12Z"/></svg>Sinkron real-time</span>
+      <span class="f"><svg viewBox="0 0 24 24"><path d="M12 3l7 2.8v5.4c0 4.6-3 7.6-7 9.3-4-1.7-7-4.7-7-9.3V5.8Z"/><path d="m9 11.6 2.2 2.2 4.2-4.2"/></svg>Data aman</span>
+      <span class="f"><svg viewBox="0 0 24 24"><rect x="7" y="2.8" width="10" height="18.4" rx="2.4"/><path d="M10.8 18.6h2.4"/></svg>Web &amp; Android</span>
+    </div>
+    <p class="authfoot">© 2026 Kasir Onga</p>
   </div>
 </div>
 
@@ -1058,9 +1100,18 @@ document.getElementById("saveSettings").onclick = ()=>{
   save(); applyTheme(); alert("Pengaturan tersimpan.");
 };
 document.getElementById("themeToggle2").onclick = toggleTheme;
-document.getElementById("resetData").onclick = ()=>{
-  if(!confirm("Hapus semua data dan kembalikan ke data contoh?")) return;
-  localStorage.removeItem(LS_KEY); location.reload();
+document.getElementById("resetTx").onclick = ()=>{
+  if(!confirm("Hapus SEMUA transaksi, transaksi ditahan, dan riwayat stok? Produk dan stok tetap. Tindakan ini tersinkron ke semua perangkat dan tidak bisa dibatalkan.")) return;
+  DB.transactions = []; DB.held = []; DB.stockMoves = []; cart = [];
+  save(); pushNow(); renderAll();
+  alert("Semua transaksi sudah dihapus. Produk dan stok tetap.");
+};
+document.getElementById("resetAll").onclick = ()=>{
+  if(!confirm("MULAI DARI NOL? Semua transaksi DAN produk akan dihapus permanen dari akun toko ini (tersinkron ke semua perangkat). Nama toko dan pengaturan tetap.")) return;
+  if(!confirm("Sekali lagi: yakin hapus semua produk dan transaksi?")) return;
+  DB.transactions = []; DB.held = []; DB.stockMoves = []; DB.products = []; cart = [];
+  save(); pushNow(); renderAll();
+  alert("Selesai. Toko mulai dari nol — silakan tambah produk pertamamu di menu Produk & Stok.");
 };
 
 /* ============================================================ INIT */
