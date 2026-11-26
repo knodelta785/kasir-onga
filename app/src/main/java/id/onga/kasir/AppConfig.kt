@@ -8,6 +8,6 @@ package id.onga.kasir
  * lalu build ulang APK-nya.
  */
 object AppConfig {
-    const val WEB_APP_URL = "https://GANTI-DENGAN-ALAMAT-WEB-ONGA-KAMU.example.com/"
+    const val WEB_APP_URL = "https://knodelta785.github.io/kasir-onga/"
     const val APP_TITLE = "Kasir Onga"
 }

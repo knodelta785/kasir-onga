@@ -54,10 +54,31 @@ yang siap dipasang di HP Android (izinkan "install dari sumber tidak dikenal" bi
 
 Setiap push berikutnya ke `main` akan membuat APK baru secara otomatis.
 
+## Versi web (GitHub Pages) — sudah termasuk
+
+Folder `docs/` berisi versi web statis Kasir Onga (data tersimpan lokal di perangkat).
+Alamat yang dipakai APK: **https://knodelta785.github.io/kasir-onga/**
+
+Aktifkan GitHub Pages dari Termux (sekali saja, setelah repo ter-push):
+
+```bash
+echo '{"source":{"branch":"main","path":"/docs"}}' | gh api repos/knodelta785/kasir-onga/pages --method POST --input -
+```
+
+Cek alamatnya:
+
+```bash
+gh api repos/knodelta785/kasir-onga/pages --jq .html_url
+```
+
 ## Catatan
 
 - APK ini adalah versi *debug* untuk pemakaian sendiri/toko. Untuk rilis resmi
   (Play Store) perlu signing key sendiri — bisa ditambahkan nanti.
+- **Penting soal update APK:** APK debug dari GitHub Actions ditandatangani kunci
+  sementara yang berbeda tiap build, jadi APK baru **tidak bisa menimpa** APK lama —
+  hapus (uninstall) aplikasi Kasir Onga lama dulu, baru pasang yang baru.
+  (Bisa diperbaiki permanen dengan keystore tetap di repo — tanyakan ke Muse bila perlu.)
 - Cetak struk: tombol printer di kanan atas, atau dari halaman web lewat
   `window.OngaAndroid.print()`. Printer thermal Bluetooth harus sudah terhubung
   (paired) ke HP dan mendukung layanan cetak Android, atau gunakan aplikasi
