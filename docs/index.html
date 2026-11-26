@@ -392,6 +392,14 @@ body[data-page="kasir"] .headsearch{display:flex}
 .switch.on{background:var(--accent)}
 .switch.on i{left:22px}
 
+/* Mode Kasir: sembunyikan fitur pemilik & data keuangan */
+body[data-role="kasir"] nav.tabs button[data-page="riwayat"],
+body[data-role="kasir"] nav.tabs button[data-page="laporan"],
+body[data-role="kasir"] nav.tabs button[data-page="analisa"],
+body[data-role="kasir"] nav.tabs button[data-page="pengaturan"]{display:none}
+body[data-role="kasir"] .owner-only{display:none!important}
+body[data-role="kasir"] .verifybar{display:none!important}
+
 /* Ukuran tombol konsisten: teks tidak membungkus, tinggi seragam */
 .btn{white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; gap:6px}
 #pwModal .btn{font-size:14.5px; padding:12px 6px}
@@ -483,13 +491,13 @@ body[data-page="kasir"] .headsearch{display:flex}
   <section class="page" id="page-produk">
     <div class="row wrap">
       <h2 style="flex:1; margin:0">Produk &amp; Stok</h2>
-      <button class="btn" id="catManageBtn">Kategori</button>
-      <button class="btn primary" id="addProductBtn">+ Tambah Produk</button>
+      <button class="btn owner-only" id="catManageBtn">Kategori</button>
+      <button class="btn primary owner-only" id="addProductBtn">+ Tambah Produk</button>
     </div>
     <div id="lowStockBox" style="margin-top:12px"></div>
     <div class="card" style="margin-top:12px; overflow-x:auto">
       <table>
-        <thead><tr><th>Produk</th><th>Kategori</th><th class="num">Harga</th><th class="num">HPP</th><th class="num">Stok</th><th></th></tr></thead>
+        <thead><tr><th>Produk</th><th>Kategori</th><th class="num">Harga</th><th class="num owner-only">HPP</th><th class="num">Stok</th><th class="owner-only"></th></tr></thead>
         <tbody id="productTable"></tbody>
       </table>
     </div>
@@ -566,6 +574,15 @@ body[data-page="kasir"] .headsearch{display:flex}
       <button class="btn red block" id="resetAll">Mulai dari Nol</button>
       <button class="btn block" id="loadDemo" style="margin-top:8px">Muat Data Contoh</button>
     </div>
+    <div class="card" style="max-width:560px; margin-top:14px">
+      <h3 style="margin-top:0">Mode Kasir</h3>
+      <p class="small muted" style="margin:0 0 10px">Untuk karyawan kasir di perangkat ini: hanya bisa jualan dan lihat produk. Pendapatan, laporan, dan pengaturan tersembunyi.</p>
+      <div class="row">
+        <button class="btn block" id="setPinBtn">Atur PIN Kasir</button>
+        <button class="btn primary block" id="enterCashierBtn">Aktifkan Mode Kasir</button>
+      </div>
+      <p class="small muted" id="pinStatus" style="margin:10px 0 0">PIN belum diatur.</p>
+    </div>
     <div class="card" id="deleteZone" style="max-width:560px; margin-top:14px; display:none">
       <h3 style="margin-top:0">Berhenti Berlangganan</h3>
       <p class="small muted" style="margin:0 0 10px">Akunmu dihapus permanen dari sistem Kasir Onga, beserta seluruh data toko. Emailmu terlepas dan bisa dipakai daftar lagi.</p>
@@ -575,6 +592,25 @@ body[data-page="kasir"] .headsearch{display:flex}
 </main>
 
 <!-- ================= GERBANG MASUK / DAFTAR (MULTI-TOKO) ================= -->
+<div class="modal" id="pinModal">
+  <div class="sheet">
+    <h3 id="pinTitle" style="margin-top:0">PIN Kasir</h3>
+    <p class="small muted" id="pinDesc" style="margin-top:0"></p>
+    <label>PIN</label>
+    <input id="pin1" type="password" inputmode="numeric" autocomplete="new-password" autocapitalize="off" maxlength="6" placeholder="4–6 digit angka">
+    <div id="pin2Wrap">
+      <label>Ulangi PIN</label>
+      <input id="pin2" type="password" inputmode="numeric" autocomplete="new-password" autocapitalize="off" maxlength="6" placeholder="Ketik ulang PIN">
+    </div>
+    <p class="autherr" id="pinErr" style="display:none"></p>
+    <div class="row" style="margin-top:14px">
+      <button class="btn block" id="pinCancel">Batal</button>
+      <button class="btn primary block" id="pinOk">Simpan</button>
+    </div>
+    <button class="btn ghost block" id="pinForgot" style="margin-top:8px; display:none">Lupa PIN? Pakai password akun</button>
+  </div>
+</div>
+
 <div class="modal" id="pwModal">
   <div class="sheet">
     <h3 id="pwTitle" style="margin-top:0">Konfirmasi Password</h3>
@@ -615,6 +651,10 @@ body[data-page="kasir"] .headsearch{display:flex}
     <div class="menurow" id="amSettingsRow">
       <span class="mic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span>
       Pengaturan <span class="chev">›</span>
+    </div>
+    <div class="menurow" id="amOwnerRow" style="display:none">
+      <span class="mic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></span>
+      Mode Pemilik <span class="chev">›</span>
     </div>
     <div class="menurow" id="amLoginRow" style="display:none">
       <span class="mic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></span>
@@ -1009,6 +1049,7 @@ function toggleTheme(){ DB.settings.theme = DB.settings.theme==="dark" ? "light"
 /* ---------- navigasi ---------- */
 document.getElementById("tabs").addEventListener("click", e=>{
   const b = e.target.closest("button[data-page]"); if(!b) return;
+  if(roleMode === "kasir" && ["riwayat","laporan","analisa","pengaturan"].includes(b.dataset.page)) return;
   document.body.dataset.page = b.dataset.page;
   document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.toggle("active", x===b));
   document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active", p.id==="page-"+b.dataset.page));
@@ -1255,9 +1296,9 @@ function renderProduk(){
       <td><b>${esc(p.emoji||"📦")} ${esc(p.name)}</b><div class="small muted">${esc(p.sku||"")}</div></td>
       <td>${esc(catName(p.catId))}</td>
       <td class="num">${rp(p.price)}</td>
-      <td class="num">${rp(p.cost)}</td>
+      <td class="num owner-only">${rp(p.cost)}</td>
       <td class="num">${p.stock<=DB.settings.lowStock?`<span class="badge warn">${p.stock}</span>`:p.stock} ${esc(p.unit||"")}</td>
-      <td style="white-space:nowrap">
+      <td class="owner-only" style="white-space:nowrap">
         <button class="btn sm" data-stock="${p.id}">Stok</button>
         <button class="btn sm" data-edit="${p.id}">Edit</button>
         <button class="btn sm red" data-delprod="${p.id}">Hapus</button>
@@ -1541,7 +1582,7 @@ function renderAvatar(){
   }
   if(amShop) amShop.textContent = name;
   const del = document.getElementById("amAvatarDel");
-  if(del) del.style.display = photo ? "" : "none";
+  if(del) del.style.display = (photo && roleMode !== "kasir") ? "" : "none";
 }
 document.getElementById("avatarBtn").addEventListener("click", ()=>{ renderAvatar(); updateAccountUI(); openModal("accountModal"); });
 document.getElementById("amThemeRow").addEventListener("click", ()=>toggleTheme());
@@ -1568,6 +1609,116 @@ document.getElementById("avatarFile").addEventListener("change", e=>{
   };
   rd.readAsDataURL(f);
   e.target.value = "";
+});
+
+/* ---------- Mode Kasir (peran terbatas, per perangkat) ---------- */
+const ROLE_KEY = LS_KEY + ":role";
+let roleMode = "owner";
+try{ roleMode = localStorage.getItem(ROLE_KEY) === "kasir" ? "kasir" : "owner"; }catch(e){}
+async function pinHash(pin){
+  const salt = (currentUser ? currentUser.uid : "lokal") + "|onga|";
+  if(window.crypto && crypto.subtle){
+    try{
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt + pin));
+      return [...new Uint8Array(buf)].map(x=>x.toString(16).padStart(2,"0")).join("");
+    }catch(e){}
+  }
+  let h = 0; const s = salt + pin;
+  for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
+  return "x" + h.toString(16);
+}
+function updateCashierUI(){
+  const st = document.getElementById("pinStatus");
+  if(st) st.textContent = DB.settings.cashierPinHash ? "PIN sudah diatur — Mode Kasir siap dipakai di perangkat ini." : "PIN belum diatur.";
+}
+function applyRole(){
+  document.body.dataset.role = roleMode;
+  const orow = document.getElementById("amOwnerRow");
+  if(orow) orow.style.display = roleMode === "kasir" ? "" : "none";
+  ["amAvatarRow","amSettingsRow"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.style.display = roleMode === "kasir" ? "none" : "";
+  });
+  if(roleMode === "kasir"){
+    ["amLogoutRow","amLoginRow"].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.style.display = "none";
+    });
+    const active = document.querySelector("nav.tabs button.active");
+    if(active && ["riwayat","laporan","analisa","pengaturan"].includes(active.dataset.page)){
+      document.querySelector('button[data-page="kasir"]').click();
+    }
+  } else {
+    updateAccountUI();
+  }
+  renderAvatar();
+  updateCashierUI();
+}
+function setRole(r){
+  roleMode = r;
+  try{ localStorage.setItem(ROLE_KEY, r); }catch(e){}
+  applyRole();
+}
+/* ----- pop-up PIN ----- */
+let pinResolve = null, pinMode = "set";
+function pinShowErr(m){ const e = document.getElementById("pinErr"); e.textContent = m; e.style.display = m ? "block" : "none"; }
+function pinAsk(mode){
+  return new Promise(res=>{
+    pinResolve = res; pinMode = mode;
+    const isSet = mode === "set";
+    document.getElementById("pinTitle").textContent = isSet ? "Atur PIN Kasir" : "Mode Pemilik";
+    document.getElementById("pinDesc").textContent = isSet ? "PIN 4–6 digit untuk mengunci Mode Kasir di perangkat ini." : "Masukkan PIN untuk kembali ke Mode Pemilik.";
+    document.getElementById("pinOk").textContent = isSet ? "Simpan PIN" : "Buka Kunci";
+    document.getElementById("pin2Wrap").style.display = isSet ? "" : "none";
+    document.getElementById("pinForgot").style.display = (!isSet && currentUser) ? "" : "none";
+    document.getElementById("pin1").value = "";
+    document.getElementById("pin2").value = "";
+    pinShowErr("");
+    openModal("pinModal");
+    setTimeout(()=>{ const i = document.getElementById("pin1"); if(i) i.focus(); }, 250);
+  });
+}
+function pinDone(v){ closeModals(); if(pinResolve){ const r = pinResolve; pinResolve = null; r(v); } }
+document.getElementById("pinCancel").addEventListener("click", ()=>pinDone(false));
+document.getElementById("pinModal").addEventListener("click", e=>{ if(e.target.id==="pinModal") pinDone(false); });
+document.getElementById("pinOk").addEventListener("click", async ()=>{
+  const v1 = document.getElementById("pin1").value.trim();
+  const v2 = document.getElementById("pin2").value.trim();
+  if(!/^\d{4,6}$/.test(v1)){ pinShowErr("PIN harus 4–6 digit angka."); return; }
+  if(pinMode === "set"){
+    if(v1 !== v2){ pinShowErr("Kedua PIN tidak sama."); return; }
+    DB.settings.cashierPinHash = await pinHash(v1);
+    save(); updateCashierUI();
+    pinDone(true);
+  } else {
+    const h = await pinHash(v1);
+    if(DB.settings.cashierPinHash && h === DB.settings.cashierPinHash) pinDone(true);
+    else pinShowErr("PIN salah.");
+  }
+});
+document.getElementById("pinForgot").addEventListener("click", async ()=>{
+  document.getElementById("pinModal").classList.remove("open");
+  const pw = await askPassword("Buka Mode Pemilik", "Buka");
+  if(pw) pinDone(true);
+  else openModal("pinModal");
+});
+/* ----- pengait UI Mode Kasir ----- */
+document.getElementById("setPinBtn").addEventListener("click", async ()=>{
+  if(await pinAsk("set")) dlgAlert("PIN kasir disimpan.");
+});
+document.getElementById("enterCashierBtn").addEventListener("click", async ()=>{
+  if(!DB.settings.cashierPinHash){
+    if(!await pinAsk("set")) return;
+  }
+  if(!await dlgConfirm("Aktifkan Mode Kasir di perangkat ini?", "Aktifkan")) return;
+  setRole("kasir");
+});
+document.getElementById("amOwnerRow").addEventListener("click", async ()=>{
+  closeModals();
+  if(await pinAsk("unlock")){
+    setRole("owner");
+    dlgAlert("Mode Pemilik aktif.");
+  }
 });
 document.getElementById("authForgot").addEventListener("click", async e=>{
   e.preventDefault();
@@ -1615,7 +1766,7 @@ document.getElementById("deleteAccountBtn").addEventListener("click", async ()=>
 });
 
 (function init(){
-  applyTheme(); syncSettingsForm();
+  applyTheme(); syncSettingsForm(); applyRole();
   const now = new Date();
   document.getElementById("repFrom").value = todayStr(new Date(now.getFullYear(), now.getMonth(), 1));
   document.getElementById("repTo").value = todayStr(now);
