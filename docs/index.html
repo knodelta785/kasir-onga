@@ -399,6 +399,15 @@ body[data-page="kasir"] .headsearch{display:flex}
 .switch.on{background:var(--accent)}
 .switch.on i{left:22px}
 
+/* Paywall langganan */
+.paywall{position:fixed; inset:0; z-index:80; display:none; align-items:flex-start; justify-content:center; overflow-y:auto; padding:30px 16px; background:linear-gradient(160deg, var(--accent-dark), var(--accent))}
+.paywall.show{display:flex}
+.pwinner{width:100%; max-width:400px; text-align:center; color:#fff}
+.pwlogo{width:96px; height:96px; border-radius:24px; box-shadow:0 16px 32px rgba(2,6,23,.4)}
+.pwinner h2{margin:16px 0 4px}
+.pwinner p{margin:0 0 16px; color:rgba(255,255,255,.85)}
+.pwinner .planbtn{margin-bottom:8px}
+
 /* Tombol nominal cepat uang diterima: besar, mudah di-tap, ada lencana jumlah tap */
 .cashchips{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:10px}
 .cashchips .chip{position:relative; border:1px solid var(--border); background:var(--surface2); color:var(--text); padding:14px 4px; min-height:52px; font-size:16px; font-weight:700; border-radius:14px; cursor:pointer}
@@ -455,6 +464,7 @@ body[data-role="kasir"] .verifybar{display:none!important}
   <button data-page="laporan"><span class="ti">📊</span><span class="tl">Laporan</span></button>
   <button data-page="analisa"><span class="ti">📈</span><span class="tl">Analisa</span></button>
   <button data-page="pengaturan"><span class="ti">⚙️</span><span class="tl">Pengaturan</span></button>
+  <button data-page="admin" id="navAdmin" style="display:none"><span class="ti">🛡️</span><span class="tl">Admin</span></button>
 </nav>
 
 <main>
@@ -594,31 +604,57 @@ body[data-role="kasir"] .verifybar{display:none!important}
         <button class="btn" id="themeToggle2" style="flex:1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Mode Terang / Gelap</button>
       </div>
       <hr style="border:none; border-top:1px solid var(--border); margin:18px 0">
-      <p class="small muted">Data tersinkron real-time ke semua perangkatmu. Struk dicetak lewat printer yang terhubung ke perangkat ini.</p>
       <h3 style="margin:18px 0 6px">Reset Data</h3>
-      <p class="small muted" style="margin-top:0">Menghapus data toko — produk, transaksi, dan riwayat — dari semua perangkat. Akunmu tetap aktif. Yang dihapus tidak bisa kembali.</p>
-      <button class="btn block" id="resetTx" style="margin-bottom:8px">Hapus Semua Transaksi</button>
+      <p class="small muted" style="margin-top:0">Hapus semua data toko. Tidak bisa kembali.</p>
       <button class="btn red block" id="resetAll">Mulai dari Nol</button>
-      <button class="btn block" id="loadDemo" style="margin-top:8px">Muat Data Contoh</button>
     </div>
     <div class="card" style="max-width:560px; margin-top:14px">
       <h3 style="margin-top:0">Mode Kasir</h3>
-      <p class="small muted" style="margin:0 0 10px">Untuk karyawan kasir di perangkat ini: hanya bisa jualan dan lihat produk. Pendapatan, laporan, dan pengaturan tersembunyi.</p>
+      <p class="small muted" style="margin:0 0 10px">Kasir hanya bisa jualan &amp; lihat produk.</p>
       <div class="row">
         <button class="btn block" id="setPinBtn">Atur PIN Kasir</button>
         <button class="btn primary block" id="enterCashierBtn">Aktifkan Mode Kasir</button>
       </div>
       <p class="small muted" id="pinStatus" style="margin:10px 0 0">PIN belum diatur.</p>
     </div>
-    <div class="card" id="deleteZone" style="max-width:560px; margin-top:14px; display:none">
-      <h3 style="margin-top:0">Berhenti Berlangganan</h3>
-      <p class="small muted" style="margin:0 0 10px">Akunmu dihapus permanen dari sistem Kasir Onga, beserta seluruh data toko. Emailmu terlepas dan bisa dipakai daftar lagi.</p>
-      <button class="btn red block" id="deleteAccountBtn">Hapus Akun &amp; Semua Data</button>
+    <div class="card" id="subCard" style="max-width:560px; margin-top:14px">
+      <h3 style="margin-top:0">Langganan</h3>
+      <p class="small muted" id="subStatus" style="margin:0 0 10px">Percobaan gratis — sisa 14 hari.</p>
+      <button class="btn block planbtn" data-plan="30" data-label="1 Bulan" data-price="50000" style="margin-bottom:8px">1 Bulan · Rp50.000</button>
+      <button class="btn block planbtn" data-plan="180" data-label="6 Bulan" data-price="250000" style="margin-bottom:8px">6 Bulan · Rp250.000 · hemat 50rb</button>
+      <button class="btn primary block planbtn" data-plan="365" data-label="1 Tahun" data-price="450000">1 Tahun · Rp450.000 · hemat 150rb</button>
+      <div id="subPayBox" style="display:none; margin-top:10px">
+        <p class="small muted" style="margin:0 0 8px">Bayar via transfer / QRIS ke admin, lalu kirim bukti.</p>
+        <a class="btn primary block" id="subWaBtn" href="#" target="_blank" rel="noopener">Kirim Bukti via WhatsApp</a>
+        <button class="btn ghost block" id="subCancelBtn" style="margin-top:6px">Batalkan Permintaan</button>
+      </div>
     </div>
+  </section>
+  <section class="page" id="page-admin">
+    <h2 style="margin:4px 0 12px">Admin Langganan</h2>
+    <h3 style="margin:0 0 8px">Permintaan Masuk</h3>
+    <div id="admReqList"><p class="small muted">Memuat…</p></div>
+    <h3 style="margin:18px 0 8px">Semua Toko</h3>
+    <div id="admShopList"><p class="small muted">Memuat…</p></div>
+    <button class="btn block" id="admRefresh" style="margin-top:4px">Muat Ulang</button>
   </section>
 </main>
 
 <!-- ================= GERBANG MASUK / DAFTAR (MULTI-TOKO) ================= -->
+<div class="paywall" id="paywall">
+  <div class="pwinner">
+    <img src="logo-full.png" alt="Kasir Onga" class="pwlogo">
+    <h2>Masa Percobaan Berakhir</h2>
+    <p id="pwMsg">Berlangganan untuk melanjutkan.</p>
+    <button class="btn block planbtn" data-plan="30" data-label="1 Bulan" data-price="50000">1 Bulan · Rp50.000</button>
+    <button class="btn block planbtn" data-plan="180" data-label="6 Bulan" data-price="250000">6 Bulan · Rp250.000 · hemat 50rb</button>
+    <button class="btn primary block planbtn" data-plan="365" data-label="1 Tahun" data-price="450000">1 Tahun · Rp450.000 · hemat 150rb</button>
+    <a class="btn block" id="pwWaBtn" href="#" target="_blank" rel="noopener" style="display:none; margin-bottom:8px">Kirim Bukti via WhatsApp</a>
+    <button class="btn ghost block" id="pwDelete" style="color:#fca5a5; margin-top:12px; display:none">Hapus akun &amp; data saya</button>
+    <p class="small" style="color:rgba(255,255,255,.75); margin-top:10px">Tanpa berlangganan, akun dan datamu dihapus dari sistem.</p>
+  </div>
+</div>
+
 <div class="modal" id="pinModal">
   <div class="sheet">
     <h3 id="pinTitle" style="margin-top:0">PIN Kasir</h3>
@@ -641,7 +677,7 @@ body[data-role="kasir"] .verifybar{display:none!important}
 <div class="modal" id="pwModal">
   <div class="sheet">
     <h3 id="pwTitle" style="margin-top:0">Konfirmasi Password</h3>
-    <p class="small muted" style="margin-top:0">Demi keamanan, ketik password akunmu dua kali. Isi manual — tidak ada isi otomatis.</p>
+    <p class="small muted" style="margin-top:0">Ketik password akunmu dua kali.</p>
     <label>Password</label>
     <input id="pw1" type="password" autocomplete="new-password" autocapitalize="off" placeholder="Password akun ini">
     <label>Ulangi password</label>
@@ -961,7 +997,7 @@ function initFirebase(){
     firebase.auth().onAuthStateChanged(user=>{
       currentUser = user || null;
       updateAccountUI();
-      if(user){ hideAuthGate(); subscribeTenant(user.uid); }
+      if(user){ hideAuthGate(); subscribeTenant(user.uid); if(DB.settings.ownerEmail !== user.email){ DB.settings.ownerEmail = user.email; save(); } }
       else{
         if(fbUnsub){ fbUnsub(); fbUnsub = null; }
         fbDoc = null;
@@ -987,7 +1023,8 @@ function subscribeTenant(uid){
       DB = remote;
       try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){}
       applyingRemote = false;
-      applyTheme(); syncSettingsForm(); renderAll();
+      applyTheme(); syncSettingsForm(); renderAll(); renderSub();
+      if(currentUser && DB.settings.ownerEmail !== currentUser.email){ DB.settings.ownerEmail = currentUser.email; save(); }
     }
     setSync("Real-time aktif");
   }, ()=> setSync("Koneksi database gagal"));
@@ -1055,8 +1092,9 @@ function updateAccountUI(){
   if(li) li.style.display = currentUser ? "none" : "";
   const ae = document.getElementById("amEmail");
   if(ae) ae.textContent = currentUser ? currentUser.email : "Mode lokal";
-  const dz = document.getElementById("deleteZone");
-  if(dz) dz.style.display = currentUser ? "" : "none";
+  const na = document.getElementById("navAdmin");
+  if(na) na.style.display = isAdmin() ? "" : "none";
+  renderSub();
 }
 save();
 
@@ -1079,6 +1117,7 @@ document.getElementById("tabs").addEventListener("click", e=>{
   document.body.dataset.page = b.dataset.page;
   document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.toggle("active", x===b));
   document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active", p.id==="page-"+b.dataset.page));
+  if(b.dataset.page === "admin") loadAdmin();
   renderAll();
 });
 
@@ -1583,13 +1622,6 @@ document.getElementById("saveSettings").onclick = ()=>{
   save(); applyTheme(); dlgAlert("Pengaturan tersimpan.");
 };
 document.getElementById("themeToggle2").onclick = toggleTheme;
-document.getElementById("resetTx").onclick = async ()=>{
-  if(currentUser){ if(!await askPassword("Hapus Semua Transaksi", "Hapus")) return; }
-  else if(!await dlgConfirm("Hapus semua transaksi?", "Hapus")) return;
-  DB.transactions = []; DB.held = []; DB.stockMoves = []; cart = [];
-  save(); pushNow(); renderAll();
-  dlgAlert("Transaksi dihapus.");
-};
 document.getElementById("resetAll").onclick = async ()=>{
   if(currentUser){ if(!await askPassword("Mulai dari Nol", "Hapus Semua")) return; }
   else {
@@ -1600,14 +1632,6 @@ document.getElementById("resetAll").onclick = async ()=>{
   save(); pushNow(); renderAll();
   dlgAlert("Selesai — toko mulai dari nol.");
 };
-document.getElementById("loadDemo").onclick = async ()=>{
-  if(!await dlgConfirm("Isi dengan data contoh?", "Isi")) return;
-  const s = seedData();
-  DB.categories = s.categories; DB.products = s.products; DB.transactions = s.transactions; DB.held = []; DB.stockMoves = []; cart = [];
-  save(); pushNow(); renderAll();
-  dlgAlert("Data contoh dimuat.");
-};
-
 /* ============================================================ INIT */
 function renderAll(){ renderKasir(); renderProduk(); renderRiwayat(); renderLaporan(); renderAnalisa(); }
 /* ---------- Ikatan gerbang masuk ---------- */
@@ -1686,7 +1710,7 @@ async function pinHash(pin){
 }
 function updateCashierUI(){
   const st = document.getElementById("pinStatus");
-  if(st) st.textContent = DB.settings.cashierPinHash ? "PIN sudah diatur — Mode Kasir siap dipakai di perangkat ini." : "PIN belum diatur.";
+  if(st) st.textContent = DB.settings.cashierPinHash ? "PIN aktif." : "PIN belum diatur.";
 }
 function applyRole(){
   document.body.dataset.role = roleMode;
@@ -1724,7 +1748,7 @@ function pinAsk(mode){
     pinResolve = res; pinMode = mode;
     const isSet = mode === "set";
     document.getElementById("pinTitle").textContent = isSet ? "Atur PIN Kasir" : "Mode Pemilik";
-    document.getElementById("pinDesc").textContent = isSet ? "PIN 4–6 digit untuk mengunci Mode Kasir di perangkat ini." : "Masukkan PIN untuk kembali ke Mode Pemilik.";
+    document.getElementById("pinDesc").textContent = isSet ? "Buat PIN 4–6 digit." : "Masukkan PIN pemilik.";
     document.getElementById("pinOk").textContent = isSet ? "Simpan PIN" : "Buka Kunci";
     document.getElementById("pin2Wrap").style.display = isSet ? "" : "none";
     document.getElementById("pinForgot").style.display = (!isSet && currentUser) ? "" : "none";
@@ -1802,7 +1826,7 @@ document.getElementById("vbRefresh").addEventListener("click", async ()=>{
     else dlgAlert("Belum terverifikasi — klik tautan di email dulu.");
   }catch(e){}
 });
-document.getElementById("deleteAccountBtn").addEventListener("click", async ()=>{
+async function deleteAccountFlow(){
   const user = window.firebase ? firebase.auth().currentUser : null;
   if(!user){ dlgAlert("Tidak ada akun yang masuk."); return; }
   const pass = await askPassword("Hapus Akun & Semua Data", "Hapus Permanen");
@@ -1820,10 +1844,151 @@ document.getElementById("deleteAccountBtn").addEventListener("click", async ()=>
   }catch(e){
     dlgAlert("Gagal menghapus akun: " + authErrText(e));
   }
+}
+document.getElementById("pwDelete").addEventListener("click", deleteAccountFlow);
+
+/* ---------- Langganan & masa percobaan ---------- */
+const SUB_DAY = 86400000, TRIAL_DAYS = 14;
+function subInfo(){
+  const now = Date.now();
+  const created = DB.settings.createdAt || now;
+  const planUntil = DB.settings.planUntil || 0;
+  if(planUntil > now) return {state:"aktif", until:planUntil};
+  const trialEnd = created + TRIAL_DAYS * SUB_DAY;
+  if(now < trialEnd) return {state:"trial", daysLeft:Math.max(1, Math.ceil((trialEnd - now) / SUB_DAY))};
+  return {state:"berakhir"};
+}
+const ADMIN_EMAIL = "knodelta785@gmail.com";
+const ADMIN_WA = "6282281251866";
+function isAdmin(){ return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
+function setWaLink(a, req){
+  if(!a) return;
+  const msg = "Halo Admin Kasir Onga, saya " + (DB.settings.shopName || "Toko") + " (" + (currentUser ? currentUser.email : "-") + ") sudah bayar paket " + req.plan + " " + rp(req.price) + ". Mohon diaktifkan.";
+  a.href = "https://wa.me/" + ADMIN_WA + "?text=" + encodeURIComponent(msg);
+}
+function renderSub(){
+  const info = subInfo();
+  const req = DB.settings.subRequest || null;
+  const el = document.getElementById("subStatus");
+  const payBox = document.getElementById("subPayBox");
+  if(info.state === "aktif"){
+    if(el) el.textContent = "Aktif sampai " + new Date(info.until).toLocaleDateString("id-ID", {day:"numeric", month:"short", year:"numeric"}) + ".";
+    if(payBox) payBox.style.display = "none";
+  } else if(req){
+    if(el) el.textContent = "Menunggu pembayaran — " + req.plan + " · " + rp(req.price) + ".";
+    if(payBox){ payBox.style.display = ""; setWaLink(document.getElementById("subWaBtn"), req); }
+  } else {
+    if(el) el.textContent = info.state === "trial" ? "Percobaan gratis — sisa " + info.daysLeft + " hari." : "Masa percobaan berakhir.";
+    if(payBox) payBox.style.display = "none";
+  }
+  const pw = document.getElementById("paywall");
+  if(pw) pw.classList.toggle("show", info.state === "berakhir");
+  const pwMsg = document.getElementById("pwMsg");
+  if(pwMsg) pwMsg.textContent = req ? "Permintaan terkirim — bayar lalu kirim bukti via WhatsApp." : "Berlangganan untuk melanjutkan.";
+  const pwWa = document.getElementById("pwWaBtn");
+  if(pwWa){ pwWa.style.display = req ? "" : "none"; if(req) setWaLink(pwWa, req); }
+  const del = document.getElementById("pwDelete");
+  if(del) del.style.display = currentUser ? "" : "none";
+}
+async function requestPlan(days, label, price){
+  if(!currentUser){ dlgAlert("Masuk dulu untuk berlangganan."); return; }
+  if(!await dlgConfirm("Minta paket " + label + " — " + rp(price) + "?", "Minta Paket")) return;
+  DB.settings.subRequest = {plan: label, days: days, price: price, ts: Date.now()};
+  save(); pushNow(); renderSub();
+  dlgAlert("Permintaan terkirim. Bayar, lalu kirim bukti via WhatsApp.");
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest(".planbtn");
+  if(b) requestPlan(parseInt(b.dataset.plan, 10), b.dataset.label, parseInt(b.dataset.price, 10));
+});
+document.getElementById("subCancelBtn").addEventListener("click", async ()=>{
+  if(!await dlgConfirm("Batalkan permintaan?", "Ya, Batalkan")) return;
+  DB.settings.subRequest = null;
+  save(); pushNow(); renderSub();
 });
 
+/* ---------- Panel Admin ---------- */
+function shopStatusText(s){
+  const now = Date.now();
+  if((s.planUntil || 0) > now) return "Aktif s/d " + new Date(s.planUntil).toLocaleDateString("id-ID", {day:"numeric", month:"short", year:"numeric"});
+  const trialEnd = (s.createdAt || now) + TRIAL_DAYS * SUB_DAY;
+  if(now < trialEnd) return "Trial — sisa " + Math.max(1, Math.ceil((trialEnd - now) / SUB_DAY)) + " hari";
+  return "Berakhir";
+}
+async function loadAdmin(){
+  const reqBox = document.getElementById("admReqList"), shopBox = document.getElementById("admShopList");
+  if(!reqBox || !shopBox) return;
+  if(!isAdmin() || !window.firebase || !fbDb){
+    reqBox.innerHTML = '<p class="small muted">Masuk sebagai admin untuk melihat data.</p>';
+    shopBox.innerHTML = "";
+    return;
+  }
+  reqBox.innerHTML = '<p class="small muted">Memuat…</p>';
+  shopBox.innerHTML = '<p class="small muted">Memuat…</p>';
+  try{
+    const snap = await fbDb.collection("toko").get();
+    const rows = [];
+    snap.forEach(d=>{
+      const s = (d.data() || {}).settings || {};
+      rows.push({uid: d.id, shop: s.shopName || "Toko", email: s.ownerEmail || "(belum tercatat)", createdAt: s.createdAt || 0, planUntil: s.planUntil || 0, req: s.subRequest || null});
+    });
+    const reqs = rows.filter(r=>r.req);
+    reqBox.innerHTML = reqs.length ? reqs.map(r=>`
+      <div class="card" style="margin-bottom:10px">
+        <b>${esc(r.shop)}</b><div class="small muted">${esc(r.email)}</div>
+        <div style="margin:6px 0">${esc(r.req.plan)} · ${rp(r.req.price)}</div>
+        <div class="row">
+          <button class="btn primary block" data-adm="approve" data-uid="${r.uid}" data-days="${r.req.days}">Setujui</button>
+          <button class="btn block" data-adm="reject" data-uid="${r.uid}">Tolak</button>
+        </div>
+      </div>`).join("") : '<p class="small muted">Tidak ada permintaan.</p>';
+    shopBox.innerHTML = rows.length ? rows.map(r=>`
+      <div class="card" style="margin-bottom:10px">
+        <b>${esc(r.shop)}</b><div class="small muted">${esc(r.email)}</div>
+        <div style="margin:6px 0">${shopStatusText(r)}</div>
+        <div class="row">
+          <button class="btn sm" data-adm="give" data-uid="${r.uid}" data-days="30">+1 Bln</button>
+          <button class="btn sm" data-adm="give" data-uid="${r.uid}" data-days="180">+6 Bln</button>
+          <button class="btn sm" data-adm="give" data-uid="${r.uid}" data-days="365">+1 Thn</button>
+        </div>
+      </div>`).join("") : '<p class="small muted">Belum ada toko.</p>';
+  }catch(e){
+    reqBox.innerHTML = '<p class="small muted">Gagal memuat. Pastikan Rules Firebase sudah diperbarui.</p>';
+    shopBox.innerHTML = "";
+  }
+}
+async function adminGive(uid, days, clearReq){
+  try{
+    const ref = fbDb.collection("toko").doc(uid);
+    const snap = await ref.get();
+    const s = (snap.data() || {}).settings || {};
+    const upd = {"settings.planUntil": Math.max(Date.now(), s.planUntil || 0) + days * SUB_DAY, _updatedAt: Date.now()};
+    if(clearReq) upd["settings.subRequest"] = null;
+    await ref.update(upd);
+    dlgAlert("Langganan diaktifkan.");
+    loadAdmin();
+  }catch(e){ dlgAlert("Gagal: " + authErrText(e)); }
+}
+document.getElementById("page-admin").addEventListener("click", e=>{
+  const b = e.target.closest("[data-adm]"); if(!b) return;
+  const uid = b.dataset.uid;
+  if(b.dataset.adm === "approve") adminGive(uid, parseInt(b.dataset.days, 10), true);
+  else if(b.dataset.adm === "give") adminGive(uid, parseInt(b.dataset.days, 10), false);
+  else if(b.dataset.adm === "reject"){
+    dlgConfirm("Tolak permintaan ini?", "Tolak").then(async ok=>{
+      if(!ok) return;
+      try{
+        await fbDb.collection("toko").doc(uid).update({"settings.subRequest": null, _updatedAt: Date.now()});
+        loadAdmin();
+      }catch(err){ dlgAlert("Gagal: " + authErrText(err)); }
+    });
+  }
+});
+document.getElementById("admRefresh").addEventListener("click", loadAdmin);
+
 (function init(){
-  applyTheme(); syncSettingsForm(); applyRole();
+  if(!DB.settings.createdAt){ DB.settings.createdAt = Date.now(); save(); }
+  applyTheme(); syncSettingsForm(); applyRole(); renderSub();
   const now = new Date();
   document.getElementById("repFrom").value = todayStr(new Date(now.getFullYear(), now.getMonth(), 1));
   document.getElementById("repTo").value = todayStr(now);
