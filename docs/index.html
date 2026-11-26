@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Kasir Onga V.1</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
 <meta name="theme-color" content="#2563eb">
 <style>
 :root{
@@ -120,9 +122,14 @@ td.num,th.num{text-align:right; white-space:nowrap}
     linear-gradient(160deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 58%, #0b1220) 82%)}
 .authgate.show{display:flex}
 .authgate .wrap{width:100%; max-width:400px}
-.authgate .brandmark{width:74px; height:74px; margin:0 auto 12px; border-radius:23px; display:flex; align-items:center; justify-content:center;
-  background:linear-gradient(145deg, rgba(255,255,255,.30), rgba(255,255,255,.06));
-  border:1px solid rgba(255,255,255,.45); box-shadow:0 14px 30px rgba(2,6,23,.35), inset 0 1px 0 rgba(255,255,255,.55)}
+.authgate .brandmark{margin:0 auto 12px; display:flex; align-items:center; justify-content:center}
+.authgate .brandmark img{width:118px; height:118px; border-radius:28px; box-shadow:0 18px 36px rgba(2,6,23,.4)}
+header.topbar .brandlogo{width:44px; height:44px; flex:none; border-radius:14px; object-fit:cover; box-shadow:0 0 0 1px rgba(255,255,255,.35), 0 4px 10px rgba(2,6,23,.3)}
+@font-face{font-family:'Plus Jakarta Sans'; src:url('fonts/pjs.woff2') format('woff2'); font-weight:700 800; font-display:swap}
+.brandwrap{flex:1; min-width:0}
+.brandeyebrow{font-family:'Plus Jakarta Sans',sans-serif; font-size:9.5px; font-weight:700; letter-spacing:2.4px; text-transform:uppercase; color:rgba(255,255,255,.72); line-height:1.1}
+header.topbar .brand{font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; letter-spacing:-.2px; line-height:1.15}
+#amShop{font-family:'Plus Jakarta Sans',sans-serif}
 .authgate .logo{font-size:27px; font-weight:800; text-align:center; color:#fff; letter-spacing:.2px}
 .authgate .tag{text-align:center; color:rgba(255,255,255,.88); margin:5px 0 20px; font-size:14.5px}
 .authgate .box{width:100%; background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:20px 18px 16px; box-shadow:0 24px 48px rgba(2,6,23,.35)}
@@ -420,8 +427,11 @@ body[data-role="kasir"] .verifybar{display:none!important}
 
 <header class="topbar">
   <div class="brandrow">
-    <div class="brand" id="shopNameTop">Kasir Onga</div>
-    <span id="syncStatus" style="background:rgba(255,255,255,.18); padding:5px 10px; border-radius:999px; font-size:12px; white-space:nowrap">Mode lokal</span>
+    <img class="brandlogo" src="logo.png" alt="Logo Kasir Onga">
+    <div class="brandwrap">
+      <div class="brandeyebrow">Kasir Onga</div>
+      <div class="brand" id="shopNameTop">Kasir Onga</div>
+    </div>
     <button class="avatarbtn" id="avatarBtn" title="Akun">
       <img id="avatarImg" alt="" style="display:none">
       <span id="avatarInitial">T</span>
@@ -698,9 +708,8 @@ body[data-role="kasir"] .verifybar{display:none!important}
 <div class="authgate show" id="authGate">
   <div class="wrap">
     <div class="brandmark">
-      <svg width="37" height="37" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v17.2l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 20.2Z"/><path d="M9.3 8h5.4M9.3 12h5.4"/></svg>
+      <img src="logo-full.png" alt="Logo Kasir Onga">
     </div>
-    <div class="logo">Kasir Onga</div>
     <p class="tag">Satu akun, semua perangkat.</p>
     <div class="box">
       <div class="authtabs">
