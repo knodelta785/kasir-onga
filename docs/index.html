@@ -330,17 +330,67 @@ input,select,textarea{border-radius:14px; border-color:color-mix(in srgb, var(--
   }
   nav.tabs button{border-radius:18px}
 }
+
+/* ===== Tema v3: header gaya Grab =====
+   Zona gradasi warna aksen (gelap di atas, terang di bawah) berisi
+   nama toko + tombol lingkaran, dan bilah cari putih besar yang
+   selalu terlihat di halaman Kasir. */
+header.topbar{
+  flex-direction:column; align-items:stretch; gap:12px;
+  padding:16px 16px 18px; min-height:0;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 66%, #071224) 0%, var(--accent) 80%, color-mix(in srgb, var(--accent) 86%, #ffffff) 135%);
+  border-radius:0 0 26px 26px;
+}
+.brandrow{display:flex; align-items:center; gap:8px; width:100%}
+.brandrow .brand{font-size:18px}
+#syncStatus{margin-left:auto}
+header.topbar .iconbtn{
+  border-radius:50%; width:40px; height:40px; flex:none;
+  background:rgba(255,255,255,.22);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.28);
+}
+.headsearch{display:none; gap:8px; align-items:center; width:100%}
+body[data-page="kasir"] .headsearch{display:flex}
+.headsearch input{
+  flex:1; min-width:0; height:48px; border:none; border-radius:15px;
+  background:#ffffff; color:#0f172a; font-size:15px; padding:0 16px;
+  box-shadow:0 6px 18px rgba(2,6,23,.22);
+}
+.headsearch input::placeholder{color:#8a94a6}
+.headsearch input:focus{box-shadow:0 6px 18px rgba(2,6,23,.22), 0 0 0 3px rgba(255,255,255,.45)}
+#holdListBtn{
+  height:48px; border:none; border-radius:15px; padding:0 14px;
+  background:rgba(255,255,255,.22); color:#fff; font-weight:700; font-size:13.5px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.28);
+  cursor:pointer; white-space:nowrap; font-family:inherit;
+}
+#holdListBtn:active{transform:scale(.97)}
+@media (max-width:899px){
+  header.topbar{padding:13px 14px 15px; gap:10px}
+  .headsearch input{height:46px; font-size:16px}
+  #holdListBtn{height:46px; padding:0 11px; font-size:12.5px}
+}
+@media (min-width:900px){
+  header.topbar{position:static}
+  nav.tabs{top:0}
+}
 </style>
 </head>
-<body>
+<body data-page="kasir">
 
 <header class="topbar">
-  <div class="brand" id="shopNameTop">Kasir Onga</div>
-  <span id="syncStatus" style="background:rgba(255,255,255,.18); padding:5px 10px; border-radius:999px; font-size:12px; white-space:nowrap">Mode lokal</span>
-  <button class="iconbtn" id="themeToggle" title="Mode terang/gelap">🌙</button>
-  <button class="iconbtn" id="logoutTop" title="Keluar dari akun" style="display:none">
-    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M12 3v8"/><path d="M6.3 6.5a8 8 0 1 0 11.4 0"/></svg>
-  </button>
+  <div class="brandrow">
+    <div class="brand" id="shopNameTop">Kasir Onga</div>
+    <span id="syncStatus" style="background:rgba(255,255,255,.18); padding:5px 10px; border-radius:999px; font-size:12px; white-space:nowrap">Mode lokal</span>
+    <button class="iconbtn" id="themeToggle" title="Mode terang/gelap">🌙</button>
+    <button class="iconbtn" id="logoutTop" title="Keluar dari akun" style="display:none">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M12 3v8"/><path d="M6.3 6.5a8 8 0 1 0 11.4 0"/></svg>
+    </button>
+  </div>
+  <div class="headsearch">
+    <input id="searchInput" type="search" placeholder="🔍  Cari produk / SKU…">
+    <button id="holdListBtn">⏸ Ditahan (<span id="holdCount">0</span>)</button>
+  </div>
 </header>
 <div class="verifybar" id="verifyBar" style="display:none">
   <span style="flex:1">Verifikasi emailmu — cek inbox/spam.</span>
@@ -362,11 +412,7 @@ input,select,textarea{border-radius:14px; border-color:color-mix(in srgb, var(--
   <section class="page active" id="page-kasir">
     <div class="kasir-layout">
       <div>
-        <div class="row searchrow">
-          <input id="searchInput" type="search" placeholder="Cari produk / SKU…">
-          <button class="btn" id="holdListBtn" style="flex:none">⏸ Ditahan (<span id="holdCount">0</span>)</button>
-        </div>
-        <div class="chips" id="catChips" style="margin-top:10px"></div>
+        <div class="chips" id="catChips"></div>
         <div class="prodgrid" id="prodGrid"></div>
       </div>
       <div class="card">
@@ -896,6 +942,7 @@ document.getElementById("themeToggle").onclick = toggleTheme;
 /* ---------- navigasi ---------- */
 document.getElementById("tabs").addEventListener("click", e=>{
   const b = e.target.closest("button[data-page]"); if(!b) return;
+  document.body.dataset.page = b.dataset.page;
   document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.toggle("active", x===b));
   document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active", p.id==="page-"+b.dataset.page));
   renderAll();
