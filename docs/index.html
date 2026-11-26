@@ -392,9 +392,11 @@ body[data-page="kasir"] .headsearch{display:flex}
 .switch.on{background:var(--accent)}
 .switch.on i{left:22px}
 
-/* Tombol nominal cepat uang diterima */
-.cashchips{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
-.cashchips .chip{cursor:pointer}
+/* Tombol nominal cepat uang diterima: besar, mudah di-tap, ada lencana jumlah tap */
+.cashchips{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:10px}
+.cashchips .chip{position:relative; border:1px solid var(--border); background:var(--surface2); color:var(--text); padding:14px 4px; min-height:52px; font-size:16px; font-weight:700; border-radius:14px; cursor:pointer}
+.cashchips .chip:active{background:var(--accent); color:#fff; border-color:var(--accent)}
+.cashchips .cnt{position:absolute; top:-8px; right:-6px; background:var(--accent); color:#fff; font-size:11px; font-weight:800; line-height:1; padding:4px 7px; border-radius:999px; box-shadow:0 3px 8px rgba(15,23,42,.3); pointer-events:none}
 
 /* Mode Kasir: sembunyikan fitur pemilik & data keuangan */
 body[data-role="kasir"] nav.tabs button[data-page="riwayat"],
@@ -1226,11 +1228,30 @@ function cashSet(n){ document.getElementById("cashInput").value = n ? Number(n).
 document.getElementById("cashInput").addEventListener("input", e=>{
   const raw = e.target.value.replace(/[^\d]/g,"");
   e.target.value = raw ? Number(raw).toLocaleString("id-ID") : "";
+  cashResetCounts();
 });
+let cashCounts = {};
+function cashBadge(){
+  document.querySelectorAll("#cashChips [data-cash]").forEach(b=>{
+    const k = b.dataset.cash;
+    const n = cashCounts[k] || 0;
+    let s = b.querySelector(".cnt");
+    if(k !== "pas" && n >= 2){
+      if(!s){ s = document.createElement("span"); s.className = "cnt"; b.appendChild(s); }
+      s.textContent = "×" + n;
+    } else if(s){ s.remove(); }
+  });
+}
+function cashResetCounts(){ cashCounts = {}; cashBadge(); }
 document.getElementById("cashChips").addEventListener("click", e=>{
   const b = e.target.closest("[data-cash]"); if(!b) return;
-  if(b.dataset.cash === "pas") cashSet(calcCart().total);
-  else cashSet(cashVal() + parseInt(b.dataset.cash, 10));
+  if(b.dataset.cash === "pas"){ cashResetCounts(); cashSet(calcCart().total); }
+  else{
+    const v = parseInt(b.dataset.cash, 10);
+    cashCounts[v] = (cashCounts[v] || 0) + 1;
+    cashSet(cashVal() + v);
+    cashBadge();
+  }
 });
 document.getElementById("payMethods").addEventListener("click", e=>{
   const b = e.target.closest("[data-pay]"); if(!b) return;
@@ -1238,7 +1259,7 @@ document.getElementById("payMethods").addEventListener("click", e=>{
   document.querySelectorAll("#payMethods button").forEach(x=>x.classList.toggle("active", x===b));
   calcCart();
 });
-document.getElementById("clearCartBtn").onclick = ()=>{ cart=[]; document.getElementById("discountInput").value=""; document.getElementById("cashInput").value=""; renderKasir(); };
+document.getElementById("clearCartBtn").onclick = ()=>{ cart=[]; document.getElementById("discountInput").value=""; document.getElementById("cashInput").value=""; cashResetCounts(); renderKasir(); };
 document.getElementById("holdBtn").onclick = ()=>{
   if(!cart.length){ dlgAlert("Keranjang masih kosong."); return; }
   DB.held.push({id:uid(), ts:Date.now(), cart:JSON.parse(JSON.stringify(cart)), discount:document.getElementById("discountInput").value, discountType:document.getElementById("discountType").value});
@@ -1273,7 +1294,7 @@ document.getElementById("payBtn").onclick = ()=>{
   const tx = {id:uid(), ts:Date.now(), items, subtotal, discount:disc, total, pay:payMethod, cash, change:cash-total, voided:false};
   items.forEach(it=>{ const p=prodById(it.productId); if(p) p.stock = Math.max(0, p.stock - it.qty); });
   DB.transactions.unshift(tx); lastTx = tx; save();
-  cart=[]; document.getElementById("discountInput").value=""; document.getElementById("cashInput").value="";
+  cart=[]; document.getElementById("discountInput").value=""; document.getElementById("cashInput").value=""; cashResetCounts();
   renderKasir(); showReceipt(tx);
 };
 function receiptText(tx){
