@@ -181,6 +181,155 @@ html[data-theme="dark"] .verifybar{background:#451a03; color:#fcd34d; border-bot
   .modal .sheet{padding:14px}
   input,select,textarea{font-size:16px} /* cegah zoom otomatis di sebagian browser HP */
 }
+
+/* ===== Tema visual modern: simpel, elegan, proporsional =====
+   Semua warna turunan mengikuti --accent pilihan pengguna (color-mix),
+   jadi tema tetap konsisten di semua warna aksen dan mode terang/gelap. */
+:root{
+  --accent-soft:color-mix(in srgb, var(--accent) 12%, transparent);
+  --shadow:0 1px 2px rgba(15,23,42,.05), 0 8px 24px rgba(15,23,42,.06);
+  --shadow-lg:0 2px 4px rgba(15,23,42,.06), 0 16px 40px rgba(15,23,42,.10);
+}
+html[data-theme="dark"]{
+  --shadow:0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.30);
+  --shadow-lg:0 2px 4px rgba(0,0,0,.40), 0 16px 40px rgba(0,0,0,.45);
+}
+body{-webkit-font-smoothing:antialiased}
+h2{font-size:20px; font-weight:800; letter-spacing:-.2px; margin:2px 0 14px}
+
+/* Header: ramping, gradasi mengikuti aksen */
+header.topbar{background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 74%, #0b1220)); padding:10px 16px; min-height:56px; gap:8px; box-shadow:0 6px 20px color-mix(in srgb, var(--accent) 32%, transparent)}
+header.topbar .brand{font-size:17px; font-weight:800; letter-spacing:.1px}
+header.topbar .iconbtn{width:37px; height:37px; border-radius:12px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; font-size:17px; flex:none}
+header.topbar .iconbtn:active{transform:scale(.94)}
+#syncStatus{font-weight:600}
+
+/* Tab atas (layar besar) */
+nav.tabs{top:56px; padding:0 8px}
+nav.tabs button{display:flex; align-items:center; justify-content:center; gap:7px; padding:13px 10px 11px; font-size:14px}
+nav.tabs button .ti{font-size:16px; line-height:1}
+
+/* Kartu, tombol, kolom isian */
+.card{border-radius:18px; box-shadow:var(--shadow); padding:16px}
+.btn{border-radius:12px; transition:transform .06s ease, box-shadow .15s ease}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 78%, #000)); border-color:transparent; color:#fff; box-shadow:0 6px 16px color-mix(in srgb, var(--accent) 35%, transparent)}
+.btn.green{box-shadow:0 6px 16px rgba(22,163,74,.30)}
+.btn.red{box-shadow:0 6px 16px rgba(220,38,38,.28)}
+input,select,textarea{border-radius:12px; padding:11px 12px; transition:border-color .15s ease, box-shadow .15s ease}
+input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent)}
+label{font-size:12.5px; font-weight:600; letter-spacing:.2px; margin:12px 0 5px}
+
+/* Statistik & tabel */
+.stat .label{font-size:11.5px; font-weight:700; letter-spacing:.6px; text-transform:uppercase}
+.stat .value{font-size:23px; font-weight:800; letter-spacing:-.3px}
+th{font-size:11.5px; letter-spacing:.5px; text-transform:uppercase}
+td{padding:10px 6px}
+
+/* Produk & kasir */
+.chips button{font-weight:600; box-shadow:var(--shadow)}
+.chips button.active{box-shadow:0 6px 14px color-mix(in srgb, var(--accent) 35%, transparent)}
+.prod{border-radius:16px; box-shadow:var(--shadow)}
+.prod .emoji{display:flex; align-items:center; justify-content:center; height:54px; border-radius:12px; background:var(--surface2); font-size:27px}
+.paygrid button{border-radius:12px; font-weight:600}
+.paygrid button.active{box-shadow:0 6px 14px color-mix(in srgb, var(--accent) 32%, transparent)}
+.badge{font-weight:700}
+
+/* Modal: lembar bawah dengan pegangan */
+.modal .sheet{border-radius:22px 22px 0 0; box-shadow:var(--shadow-lg)}
+@media (max-width:639px){
+  .modal .sheet::before{content:""; display:block; width:42px; height:4.5px; border-radius:99px; background:var(--border); margin:0 auto 14px}
+}
+
+/* Layar besar: napas lebih lega */
+@media (min-width:900px){
+  main{padding:20px 16px 28px}
+}
+
+/* ===== HP: navigasi bawah ala aplikasi modern ===== */
+@media (max-width:899px){
+  main{padding:14px 14px calc(92px + env(safe-area-inset-bottom))}
+  header.topbar{padding:9px 12px; min-height:54px}
+  header.topbar .brand{font-size:16px}
+  h2{font-size:18px}
+  .stat .value{font-size:20px}
+  .prod{padding:10px 8px; border-radius:14px}
+  .prod .emoji{height:44px; font-size:22px; border-radius:10px}
+  .prod .pr{font-size:13px}
+  nav.tabs{
+    position:fixed; top:auto; bottom:0; left:0; right:0; z-index:60;
+    background:color-mix(in srgb, var(--surface) 92%, transparent);
+    -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    border-top:1px solid var(--border); border-bottom:none;
+    box-shadow:0 -8px 28px rgba(15,23,42,.10);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+    overflow:visible;
+  }
+  nav.tabs button{
+    flex:1; min-width:0; flex-direction:column; gap:3px;
+    padding:5px 2px 3px; border-bottom:none; border-radius:12px;
+    font-size:10.5px; color:var(--muted);
+  }
+  nav.tabs button .ti{font-size:20px; line-height:1.15; padding:3px 12px; border-radius:999px}
+  nav.tabs button.active{color:var(--accent); font-weight:700}
+  nav.tabs button.active .ti{background:var(--accent-soft)}
+}
+
+/* ===== Tema v2: lembut & mengalir, tanpa kotak kaku =====
+   Prinsip: tanpa garis tepi, sudut sangat bulat, bayangan menyebar halus,
+   tombol berbentuk pil, navigasi melayang. */
+:root{
+  --bg:#eef1f6;
+  --shadow:0 10px 30px rgba(15,23,42,.07);
+  --shadow-lg:0 18px 44px rgba(15,23,42,.13);
+}
+html[data-theme="dark"]{
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --shadow-lg:0 18px 44px rgba(0,0,0,.5);
+}
+header.topbar{border-radius:0 0 22px 22px}
+.card{border:none; border-radius:24px; box-shadow:var(--shadow)}
+.btn{border-radius:999px}
+.btn.primary,.btn.green,.btn.red{border:none}
+input,select,textarea{border-radius:14px; border-color:color-mix(in srgb, var(--border) 65%, transparent)}
+.chips button{border:none; box-shadow:0 2px 10px rgba(15,23,42,.05)}
+.cart-item{border:none; border-radius:16px}
+.modal .sheet{border-radius:26px 26px 0 0}
+.authgate .box{border:none; border-radius:28px}
+
+/* Produk: tanpa kotak — ubin gambar lembut, teks mengalir di bawahnya */
+.prod{background:transparent; border:none; box-shadow:none; border-radius:0; padding:4px 3px; color:var(--text)}
+.prod .nm{color:var(--text)}
+.prod .emoji{
+  height:88px; border-radius:22px; font-size:36px;
+  background:linear-gradient(160deg, var(--surface), var(--surface2));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--border) 45%, transparent), 0 6px 16px rgba(15,23,42,.05);
+  transition:transform .08s ease;
+}
+.prod:active .emoji{transform:scale(.95)}
+.prod .qty{box-shadow:0 4px 10px color-mix(in srgb, var(--accent) 45%, transparent)}
+.paygrid button{border:none; background:var(--surface2); border-radius:16px}
+.paygrid button.active{border:none}
+
+/* Tab atas (layar besar): pil lembut */
+@media (min-width:900px){
+  nav.tabs{border-bottom:1px solid color-mix(in srgb, var(--border) 55%, transparent)}
+  nav.tabs button{border-bottom:none; border-radius:999px; margin:7px 2px; padding:8px 15px}
+  nav.tabs button.active{background:var(--accent-soft)}
+}
+
+/* HP: navigasi melayang (dock) */
+@media (max-width:899px){
+  main{padding-bottom:calc(118px + env(safe-area-inset-bottom))}
+  .prod .emoji{height:74px; border-radius:19px; font-size:31px}
+  nav.tabs{
+    left:12px; right:12px; bottom:calc(10px + env(safe-area-inset-bottom));
+    border:1px solid color-mix(in srgb, var(--border) 55%, transparent);
+    border-radius:26px; box-shadow:var(--shadow-lg);
+    padding:8px 6px;
+  }
+  nav.tabs button{border-radius:18px}
+}
 </style>
 </head>
 <body>
@@ -194,18 +343,18 @@ html[data-theme="dark"] .verifybar{background:#451a03; color:#fcd34d; border-bot
   </button>
 </header>
 <div class="verifybar" id="verifyBar" style="display:none">
-  <span style="flex:1">Email belum diverifikasi. Cek inbox/spam untuk mengamankan akunmu.</span>
+  <span style="flex:1">Verifikasi emailmu — cek inbox/spam.</span>
   <button class="btn sm" id="vbResend">Kirim Ulang</button>
   <button class="btn sm" id="vbRefresh">Sudah Verifikasi</button>
 </div>
 
 <nav class="tabs" id="tabs">
-  <button data-page="kasir" class="active">🧾 Kasir</button>
-  <button data-page="produk">📦 Produk &amp; Stok</button>
-  <button data-page="riwayat">🕘 Riwayat</button>
-  <button data-page="laporan">📊 Laporan</button>
-  <button data-page="analisa">📈 Analisa</button>
-  <button data-page="pengaturan">⚙️ Pengaturan</button>
+  <button data-page="kasir" class="active"><span class="ti">🧾</span><span class="tl">Kasir</span></button>
+  <button data-page="produk"><span class="ti">📦</span><span class="tl">Produk</span></button>
+  <button data-page="riwayat"><span class="ti">🕘</span><span class="tl">Riwayat</span></button>
+  <button data-page="laporan"><span class="ti">📊</span><span class="tl">Laporan</span></button>
+  <button data-page="analisa"><span class="ti">📈</span><span class="tl">Analisa</span></button>
+  <button data-page="pengaturan"><span class="ti">⚙️</span><span class="tl">Pengaturan</span></button>
 </nav>
 
 <main>
@@ -328,10 +477,10 @@ html[data-theme="dark"] .verifybar{background:#451a03; color:#fcd34d; border-bot
       </div>
       <div id="deleteZone" style="display:none; margin-top:16px; border-top:1px solid var(--border); padding-top:12px">
         <h3 style="margin:0 0 4px">Berhenti Berlangganan</h3>
-        <p class="small muted" style="margin:0 0 10px">Menghapus akun dan <b>semua</b> data toko (produk, transaksi, laporan) secara permanen dari Kasir Onga. Emailmu bebas dipakai daftar lagi. Unduh laporan Excel dulu bila masih diperlukan — yang sudah dihapus tidak bisa kembali.</p>
+        <p class="small muted" style="margin:0 0 10px">Hapus akun + <b>semua</b> data toko, permanen. Emailmu bisa dipakai daftar lagi.</p>
         <button class="btn red block" id="deleteAccountBtn">Hapus Akun &amp; Semua Data</button>
         <div id="deletePanel" style="display:none; margin-top:12px">
-          <label>Masukkan password akun ini untuk konfirmasi</label>
+          <label>Password untuk konfirmasi</label>
           <input id="deletePass" type="password" placeholder="Password akun ini">
           <div class="row" style="margin-top:10px">
             <button class="btn red" id="deleteConfirmBtn" style="flex:1">Hapus Permanen</button>
@@ -352,19 +501,19 @@ html[data-theme="dark"] .verifybar{background:#451a03; color:#fcd34d; border-bot
         <option value="#ea580c">Oranye</option>
         <option value="#9333ea">Ungu</option>
       </select>
-      <label>Ambang stok menipis (peringatan bila stok ≤)</label>
+      <label>Peringatan stok menipis (≤)</label>
       <input id="setLowStock" type="number" min="0">
       <div class="row" style="margin-top:16px">
         <button class="btn primary" id="saveSettings" style="flex:1">Simpan</button>
         <button class="btn" id="themeToggle2" style="flex:1">🌙/☀️ Ganti Mode</button>
       </div>
       <hr style="border:none; border-top:1px solid var(--border); margin:18px 0">
-      <p class="small muted">Database: bila Firebase terhubung (indikator "Real-time aktif" di atas), data tersinkron real-time antar semua perangkat (web &amp; APK) dan tersimpan di proyek Firebase milikmu; perubahan offline akan terkirim saat online lagi. Bila indikator "Mode lokal", data hanya tersimpan di perangkat ini. Cetak struk memakai sistem cetak perangkat. Untuk printer Bluetooth, hubungkan printer ke HP dan pilih saat dialog cetak muncul.</p>
+      <p class="small muted">Data tersinkron real-time ke semua perangkatmu. Struk dicetak lewat printer yang terhubung ke perangkat ini.</p>
       <h3 style="margin:18px 0 6px">Reset Data</h3>
-      <p class="small muted" style="margin-top:0">Mulai bersih tanpa data contoh/lama. Reset berlaku untuk akun toko ini dan tersinkron ke semua perangkat — data yang dihapus tidak bisa dikembalikan.</p>
-      <button class="btn block" id="resetTx" style="margin-bottom:8px">Hapus Semua Transaksi (produk &amp; stok tetap)</button>
-      <button class="btn red block" id="resetAll">Mulai dari Nol — Hapus Transaksi &amp; Produk</button>
-      <button class="btn block" id="loadDemo" style="margin-top:8px">Muat Data Contoh (untuk coba-coba)</button>
+      <p class="small muted" style="margin-top:0">Hapus transaksinya saja, atau kosongkan semuanya. Yang dihapus tidak bisa kembali.</p>
+      <button class="btn block" id="resetTx" style="margin-bottom:8px">Hapus Semua Transaksi</button>
+      <button class="btn red block" id="resetAll">Mulai dari Nol</button>
+      <button class="btn block" id="loadDemo" style="margin-top:8px">Muat Data Contoh</button>
     </div>
   </section>
 </main>
@@ -704,12 +853,13 @@ async function authSubmit(){
       pendingShopName = shop || "Toko Saya";
       await firebase.auth().createUserWithEmailAndPassword(email, pass);
       try{ const cu = firebase.auth().currentUser; if(cu) await cu.sendEmailVerification(); }catch(e){}
-      setTimeout(()=>alert("Pendaftaran berhasil! Email verifikasi sudah dikirim ke " + email + " — cek inbox/spam dan klik tautannya untuk mengamankan akunmu."), 700);
+      setTimeout(()=>alert("Pendaftaran berhasil! Tautan verifikasi sudah dikirim ke " + email + " — cek inbox/spam."), 700);
     } else {
       await firebase.auth().signInWithEmailAndPassword(email, pass);
     }
   }catch(e){ authShowErr(authErrText(e)); }
-  btn.disabled = false; setAuthMode(authMode);
+  btn.disabled = false;
+  btn.textContent = (authMode === "login") ? "Masuk" : "Daftar & Masuk";
 }
 function updateAccountUI(){
   const info = document.getElementById("accountInfo");
@@ -717,10 +867,10 @@ function updateAccountUI(){
   const open = document.getElementById("loginOpenBtn");
   if(!info) return;
   if(currentUser){
-    info.textContent = "Masuk sebagai " + currentUser.email + " — data tersinkron real-time ke akun toko ini.";
+    info.textContent = "Masuk sebagai " + currentUser.email;
     out.style.display = ""; open.style.display = "none";
   } else {
-    info.textContent = "Mode lokal (tanpa akun). Data hanya tersimpan di perangkat ini.";
+    info.textContent = "Mode lokal — data hanya di perangkat ini.";
     out.style.display = "none"; open.style.display = "";
   }
   const vb = document.getElementById("verifyBar");
@@ -1163,20 +1313,20 @@ document.getElementById("saveSettings").onclick = ()=>{
 };
 document.getElementById("themeToggle2").onclick = toggleTheme;
 document.getElementById("resetTx").onclick = ()=>{
-  if(!confirm("Hapus SEMUA transaksi, transaksi ditahan, dan riwayat stok? Produk dan stok tetap. Tindakan ini tersinkron ke semua perangkat dan tidak bisa dibatalkan.")) return;
+  if(!confirm("Hapus semua transaksi? Produk dan stok tetap. Tidak bisa dibatalkan.")) return;
   DB.transactions = []; DB.held = []; DB.stockMoves = []; cart = [];
   save(); pushNow(); renderAll();
   alert("Semua transaksi sudah dihapus. Produk dan stok tetap.");
 };
 document.getElementById("resetAll").onclick = ()=>{
-  if(!confirm("MULAI DARI NOL? Semua transaksi DAN produk akan dihapus permanen dari akun toko ini (tersinkron ke semua perangkat). Nama toko dan pengaturan tetap.")) return;
+  if(!confirm("Mulai dari nol? Semua produk dan transaksi dihapus permanen. Nama toko tetap.")) return;
   if(!confirm("Sekali lagi: yakin hapus semua produk dan transaksi?")) return;
   DB.transactions = []; DB.held = []; DB.stockMoves = []; DB.products = []; cart = [];
   save(); pushNow(); renderAll();
   alert("Selesai. Toko mulai dari nol — silakan tambah produk pertamamu di menu Produk & Stok.");
 };
 document.getElementById("loadDemo").onclick = ()=>{
-  if(!confirm("Isi aplikasi dengan data contoh (10 produk + transaksi contoh)? Data produk/transaksi yang sudah ada akan diganti. Nama toko dan pengaturanmu tetap.")) return;
+  if(!confirm("Isi dengan data contoh? Produk dan transaksi sekarang akan diganti.")) return;
   const s = seedData();
   DB.categories = s.categories; DB.products = s.products; DB.transactions = s.transactions; DB.held = []; DB.stockMoves = []; cart = [];
   save(); pushNow(); renderAll();
@@ -1235,7 +1385,7 @@ document.getElementById("deleteCancelBtn").addEventListener("click", ()=>{
 document.getElementById("deleteConfirmBtn").addEventListener("click", async ()=>{
   const pass = document.getElementById("deletePass").value;
   if(!pass){ alert("Isi password dulu untuk konfirmasi."); return; }
-  if(!confirm("Yakin hapus akun dan SEMUA data toko secara permanen? Ini tidak bisa dibatalkan.")) return;
+  if(!confirm("Semua data toko dihapus permanen dan tidak bisa kembali. Sudah unduh laporan Excel yang diperlukan?")) return;
   const user = window.firebase ? firebase.auth().currentUser : null;
   if(!user){ alert("Tidak ada akun yang masuk."); return; }
   const btn = document.getElementById("deleteConfirmBtn");
