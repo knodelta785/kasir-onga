@@ -392,6 +392,10 @@ body[data-page="kasir"] .headsearch{display:flex}
 .switch.on{background:var(--accent)}
 .switch.on i{left:22px}
 
+/* Ukuran tombol konsisten: teks tidak membungkus, tinggi seragam */
+.btn{white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; gap:6px}
+#pwModal .btn{font-size:14.5px; padding:12px 6px}
+
 /* Dialog dalam aplikasi */
 .dlg{text-align:center}
 .dlg p{font-size:16.5px; font-weight:700; line-height:1.45; margin:4px 0 2px}
@@ -536,27 +540,6 @@ body[data-page="kasir"] .headsearch{display:flex}
   <!-- ================= PENGATURAN ================= -->
   <section class="page" id="page-pengaturan">
     <h2>Pengaturan</h2>
-    <div class="card" style="max-width:560px; margin-bottom:14px">
-      <h3 style="margin-top:0">Akun Toko</h3>
-      <p class="small" id="accountInfo">Mode lokal (tanpa akun).</p>
-      <div class="row">
-        <button class="btn ghost" id="loginOpenBtn">Masuk / Daftar</button>
-        <button class="btn red" id="logoutBtn" style="display:none">Keluar</button>
-      </div>
-      <div id="deleteZone" style="display:none; margin-top:16px; border-top:1px solid var(--border); padding-top:12px">
-        <h3 style="margin:0 0 4px">Berhenti Berlangganan</h3>
-        <p class="small muted" style="margin:0 0 10px">Hapus akun + <b>semua</b> data toko, permanen. Emailmu bisa dipakai daftar lagi.</p>
-        <button class="btn red block" id="deleteAccountBtn">Hapus Akun &amp; Semua Data</button>
-        <div id="deletePanel" style="display:none; margin-top:12px">
-          <label>Password untuk konfirmasi</label>
-          <input id="deletePass" type="password" placeholder="Password akun ini">
-          <div class="row" style="margin-top:10px">
-            <button class="btn red" id="deleteConfirmBtn" style="flex:1">Hapus Permanen</button>
-            <button class="btn" id="deleteCancelBtn" style="flex:1">Batal</button>
-          </div>
-        </div>
-      </div>
-    </div>
     <div class="card" style="max-width:560px">
       <label>Nama toko</label><input id="setShopName">
       <label>Alamat</label><input id="setShopAddr">
@@ -578,15 +561,36 @@ body[data-page="kasir"] .headsearch{display:flex}
       <hr style="border:none; border-top:1px solid var(--border); margin:18px 0">
       <p class="small muted">Data tersinkron real-time ke semua perangkatmu. Struk dicetak lewat printer yang terhubung ke perangkat ini.</p>
       <h3 style="margin:18px 0 6px">Reset Data</h3>
-      <p class="small muted" style="margin-top:0">Hapus transaksinya saja, atau kosongkan semuanya. Yang dihapus tidak bisa kembali.</p>
+      <p class="small muted" style="margin-top:0">Menghapus data toko — produk, transaksi, dan riwayat — dari semua perangkat. Akunmu tetap aktif. Yang dihapus tidak bisa kembali.</p>
       <button class="btn block" id="resetTx" style="margin-bottom:8px">Hapus Semua Transaksi</button>
       <button class="btn red block" id="resetAll">Mulai dari Nol</button>
       <button class="btn block" id="loadDemo" style="margin-top:8px">Muat Data Contoh</button>
+    </div>
+    <div class="card" id="deleteZone" style="max-width:560px; margin-top:14px; display:none">
+      <h3 style="margin-top:0">Berhenti Berlangganan</h3>
+      <p class="small muted" style="margin:0 0 10px">Akunmu dihapus permanen dari sistem Kasir Onga, beserta seluruh data toko. Emailmu terlepas dan bisa dipakai daftar lagi.</p>
+      <button class="btn red block" id="deleteAccountBtn">Hapus Akun &amp; Semua Data</button>
     </div>
   </section>
 </main>
 
 <!-- ================= GERBANG MASUK / DAFTAR (MULTI-TOKO) ================= -->
+<div class="modal" id="pwModal">
+  <div class="sheet">
+    <h3 id="pwTitle" style="margin-top:0">Konfirmasi Password</h3>
+    <p class="small muted" style="margin-top:0">Demi keamanan, ketik password akunmu dua kali. Isi manual — tidak ada isi otomatis.</p>
+    <label>Password</label>
+    <input id="pw1" type="password" autocomplete="new-password" autocapitalize="off" placeholder="Password akun ini">
+    <label>Ulangi password</label>
+    <input id="pw2" type="password" autocomplete="new-password" autocapitalize="off" placeholder="Ketik ulang password">
+    <p class="autherr" id="pwErr" style="display:none"></p>
+    <div class="row" style="margin-top:14px">
+      <button class="btn block" id="pwCancel">Batal</button>
+      <button class="btn red block" id="pwOk">Lanjut</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="accountModal">
   <div class="sheet">
     <div class="acct-head">
@@ -977,17 +981,6 @@ async function authSubmit(){
   btn.textContent = (authMode === "login") ? "Masuk" : "Daftar & Masuk";
 }
 function updateAccountUI(){
-  const info = document.getElementById("accountInfo");
-  const out = document.getElementById("logoutBtn");
-  const open = document.getElementById("loginOpenBtn");
-  if(!info) return;
-  if(currentUser){
-    info.textContent = "Masuk sebagai " + currentUser.email;
-    out.style.display = ""; open.style.display = "none";
-  } else {
-    info.textContent = "Mode lokal — data hanya di perangkat ini.";
-    out.style.display = "none"; open.style.display = "";
-  }
   const vb = document.getElementById("verifyBar");
   if(vb) vb.style.display = (currentUser && !currentUser.emailVerified) ? "flex" : "none";
   const lr = document.getElementById("amLogoutRow");
@@ -1045,6 +1038,45 @@ const dlgConfirm = (msg, okText) => dlgShow(msg, okText || "Ya", "Batal");
 document.getElementById("dlgOk").onclick = ()=>dlgDone(true);
 document.getElementById("dlgCancel").onclick = ()=>dlgDone(false);
 document.getElementById("dlgModal").addEventListener("click", e=>{ if(e.target.id==="dlgModal") dlgDone(false); });
+
+/* ---------- pop-up password ganda (untuk aksi berbahaya) ---------- */
+let pwResolve = null;
+function pwShowErr(m){ const e = document.getElementById("pwErr"); e.textContent = m; e.style.display = m ? "block" : "none"; }
+function askPassword(title, okText){
+  return new Promise(res=>{
+    pwResolve = res;
+    document.getElementById("pwTitle").textContent = title;
+    const ok = document.getElementById("pwOk");
+    ok.textContent = okText || "Lanjut"; ok.disabled = false;
+    document.getElementById("pw1").value = "";
+    document.getElementById("pw2").value = "";
+    pwShowErr("");
+    openModal("pwModal");
+    setTimeout(()=>{ const i = document.getElementById("pw1"); if(i) i.focus(); }, 250);
+  });
+}
+function pwDone(v){ closeModals(); if(pwResolve){ const r = pwResolve; pwResolve = null; r(v); } }
+document.getElementById("pwCancel").addEventListener("click", ()=>pwDone(null));
+document.getElementById("pwModal").addEventListener("click", e=>{ if(e.target.id==="pwModal") pwDone(null); });
+document.getElementById("pwOk").addEventListener("click", async ()=>{
+  const p1 = document.getElementById("pw1").value;
+  const p2 = document.getElementById("pw2").value;
+  if(!p1 || !p2){ pwShowErr("Isi kedua kolom password."); return; }
+  if(p1 !== p2){ pwShowErr("Kedua password tidak sama."); return; }
+  if(currentUser){
+    const ok = document.getElementById("pwOk");
+    ok.disabled = true; ok.textContent = "Memeriksa...";
+    try{
+      const cred = firebase.auth.EmailAuthProvider.credential(currentUser.email, p1);
+      await currentUser.reauthenticateWithCredential(cred);
+    }catch(e){
+      ok.disabled = false; ok.textContent = "Lanjut";
+      pwShowErr("Password salah — periksa lagi.");
+      return;
+    }
+  }
+  pwDone(p1);
+});
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick = closeModals);
 document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click", e=>{ if(e.target===m) closeModals(); }));
 
@@ -1454,14 +1486,18 @@ document.getElementById("saveSettings").onclick = ()=>{
 };
 document.getElementById("themeToggle2").onclick = toggleTheme;
 document.getElementById("resetTx").onclick = async ()=>{
-  if(!await dlgConfirm("Hapus semua transaksi?", "Hapus")) return;
+  if(currentUser){ if(!await askPassword("Hapus Semua Transaksi", "Hapus")) return; }
+  else if(!await dlgConfirm("Hapus semua transaksi?", "Hapus")) return;
   DB.transactions = []; DB.held = []; DB.stockMoves = []; cart = [];
   save(); pushNow(); renderAll();
   dlgAlert("Transaksi dihapus.");
 };
 document.getElementById("resetAll").onclick = async ()=>{
-  if(!await dlgConfirm("Mulai dari nol? Semua produk & transaksi dihapus.", "Mulai")) return;
-  if(!await dlgConfirm("Yakin? Tidak bisa kembali.", "Ya, Yakin")) return;
+  if(currentUser){ if(!await askPassword("Mulai dari Nol", "Hapus Semua")) return; }
+  else {
+    if(!await dlgConfirm("Mulai dari nol? Semua produk & transaksi dihapus.", "Mulai")) return;
+    if(!await dlgConfirm("Yakin? Tidak bisa kembali.", "Ya, Yakin")) return;
+  }
   DB.transactions = []; DB.held = []; DB.stockMoves = []; DB.products = []; cart = [];
   save(); pushNow(); renderAll();
   dlgAlert("Selesai — toko mulai dari nol.");
@@ -1481,15 +1517,13 @@ document.getElementById("tabLogin").addEventListener("click", ()=>setAuthMode("l
 document.getElementById("tabRegister").addEventListener("click", ()=>setAuthMode("register"));
 document.getElementById("authSubmit").addEventListener("click", authSubmit);
 document.getElementById("authLocal").addEventListener("click", e=>{ e.preventDefault(); localOnly = true; hideAuthGate(); setSync("Mode lokal"); });
-document.getElementById("loginOpenBtn").addEventListener("click", ()=>{ localOnly = false; showAuthGate(); });
+
 async function doLogout(){
   if(!await dlgConfirm("Keluar dari akun?", "Keluar")) return;
   try{ await firebase.auth().signOut(); }catch(e){}
   try{ localStorage.removeItem(LS_KEY); }catch(e){}
   location.reload();
 }
-document.getElementById("logoutBtn").addEventListener("click", doLogout);
-
 /* ---------- avatar & menu akun ---------- */
 function renderAvatar(){
   const name = (DB.settings.shopName || "Toko").trim();
@@ -1560,25 +1594,13 @@ document.getElementById("vbRefresh").addEventListener("click", async ()=>{
     else dlgAlert("Belum terverifikasi — klik tautan di email dulu.");
   }catch(e){}
 });
-document.getElementById("deleteAccountBtn").addEventListener("click", ()=>{
-  document.getElementById("deletePanel").style.display = "block";
-  document.getElementById("deletePass").focus();
-});
-document.getElementById("deleteCancelBtn").addEventListener("click", ()=>{
-  document.getElementById("deletePanel").style.display = "none";
-  document.getElementById("deletePass").value = "";
-});
-document.getElementById("deleteConfirmBtn").addEventListener("click", async ()=>{
-  const pass = document.getElementById("deletePass").value;
-  if(!pass){ dlgAlert("Isi password dulu."); return; }
-  if(!await dlgConfirm("Hapus akun + semua data? Tidak bisa kembali.", "Hapus Permanen")) return;
+document.getElementById("deleteAccountBtn").addEventListener("click", async ()=>{
   const user = window.firebase ? firebase.auth().currentUser : null;
   if(!user){ dlgAlert("Tidak ada akun yang masuk."); return; }
-  const btn = document.getElementById("deleteConfirmBtn");
-  btn.disabled = true; btn.textContent = "Menghapus...";
+  const pass = await askPassword("Hapus Akun & Semua Data", "Hapus Permanen");
+  if(!pass) return;
+  if(!await dlgConfirm("Hapus akun + semua data? Tidak bisa kembali.", "Hapus Permanen")) return;
   try{
-    const cred = firebase.auth.EmailAuthProvider.credential(user.email, pass);
-    await user.reauthenticateWithCredential(cred);
     if(fbDoc){
       if(fbUnsub){ fbUnsub(); fbUnsub = null; }
       await fbDoc.delete(); fbDoc = null;
@@ -1588,7 +1610,6 @@ document.getElementById("deleteConfirmBtn").addEventListener("click", async ()=>
     await dlgAlert("Akun dan data toko sudah dihapus.");
     location.reload();
   }catch(e){
-    btn.disabled = false; btn.textContent = "Hapus Permanen";
     dlgAlert("Gagal menghapus akun: " + authErrText(e));
   }
 });
