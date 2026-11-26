@@ -131,6 +131,10 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .authtabs button.on{background:var(--accent); color:#fff; box-shadow:0 4px 10px rgba(2,6,23,.18)}
 .autherr{background:#fdecea; color:#a4261f; border-radius:10px; padding:9px 11px; font-size:13.5px; margin-bottom:10px; display:none}
 html[data-theme="dark"] .autherr{background:#3a2320; color:#ff9d94}
+.authok{background:#e7f7ee; color:#146c3c; border-radius:10px; padding:9px 11px; font-size:13.5px; margin-bottom:10px; display:none}
+html[data-theme="dark"] .authok{background:#17352a; color:#7ee2ae}
+.verifybar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:9px 14px; font-size:13.5px; background:#fffbeb; color:#92400e; border-bottom:1px solid #fde68a}
+html[data-theme="dark"] .verifybar{background:#451a03; color:#fcd34d; border-bottom-color:#92400e}
 .authgate label{margin:0 0 5px}
 .field{position:relative; margin-bottom:12px}
 .field svg{position:absolute; left:12px; top:50%; transform:translateY(-50%); width:19px; height:19px; stroke:var(--muted); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; pointer-events:none}
@@ -185,7 +189,15 @@ html[data-theme="dark"] .autherr{background:#3a2320; color:#ff9d94}
   <div class="brand" id="shopNameTop">Kasir Onga</div>
   <span id="syncStatus" style="background:rgba(255,255,255,.18); padding:5px 10px; border-radius:999px; font-size:12px; white-space:nowrap">Mode lokal</span>
   <button class="iconbtn" id="themeToggle" title="Mode terang/gelap">🌙</button>
+  <button class="iconbtn" id="logoutTop" title="Keluar dari akun" style="display:none">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M12 3v8"/><path d="M6.3 6.5a8 8 0 1 0 11.4 0"/></svg>
+  </button>
 </header>
+<div class="verifybar" id="verifyBar" style="display:none">
+  <span style="flex:1">Email belum diverifikasi. Cek inbox/spam untuk mengamankan akunmu.</span>
+  <button class="btn sm" id="vbResend">Kirim Ulang</button>
+  <button class="btn sm" id="vbRefresh">Sudah Verifikasi</button>
+</div>
 
 <nav class="tabs" id="tabs">
   <button data-page="kasir" class="active">🧾 Kasir</button>
@@ -314,6 +326,19 @@ html[data-theme="dark"] .autherr{background:#3a2320; color:#ff9d94}
         <button class="btn ghost" id="loginOpenBtn">Masuk / Daftar</button>
         <button class="btn red" id="logoutBtn" style="display:none">Keluar</button>
       </div>
+      <div id="deleteZone" style="display:none; margin-top:16px; border-top:1px solid var(--border); padding-top:12px">
+        <h3 style="margin:0 0 4px">Berhenti Berlangganan</h3>
+        <p class="small muted" style="margin:0 0 10px">Menghapus akun dan <b>semua</b> data toko (produk, transaksi, laporan) secara permanen dari Kasir Onga. Emailmu bebas dipakai daftar lagi. Unduh laporan Excel dulu bila masih diperlukan — yang sudah dihapus tidak bisa kembali.</p>
+        <button class="btn red block" id="deleteAccountBtn">Hapus Akun &amp; Semua Data</button>
+        <div id="deletePanel" style="display:none; margin-top:12px">
+          <label>Masukkan password akun ini untuk konfirmasi</label>
+          <input id="deletePass" type="password" placeholder="Password akun ini">
+          <div class="row" style="margin-top:10px">
+            <button class="btn red" id="deleteConfirmBtn" style="flex:1">Hapus Permanen</button>
+            <button class="btn" id="deleteCancelBtn" style="flex:1">Batal</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="card" style="max-width:560px">
       <label>Nama toko</label><input id="setShopName">
@@ -339,12 +364,13 @@ html[data-theme="dark"] .autherr{background:#3a2320; color:#ff9d94}
       <p class="small muted" style="margin-top:0">Mulai bersih tanpa data contoh/lama. Reset berlaku untuk akun toko ini dan tersinkron ke semua perangkat — data yang dihapus tidak bisa dikembalikan.</p>
       <button class="btn block" id="resetTx" style="margin-bottom:8px">Hapus Semua Transaksi (produk &amp; stok tetap)</button>
       <button class="btn red block" id="resetAll">Mulai dari Nol — Hapus Transaksi &amp; Produk</button>
+      <button class="btn block" id="loadDemo" style="margin-top:8px">Muat Data Contoh (untuk coba-coba)</button>
     </div>
   </section>
 </main>
 
 <!-- ================= GERBANG MASUK / DAFTAR (MULTI-TOKO) ================= -->
-<div class="authgate" id="authGate">
+<div class="authgate show" id="authGate">
   <div class="wrap">
     <div class="brandmark">
       <svg width="37" height="37" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v17.2l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 20.2Z"/><path d="M9.3 8h5.4M9.3 12h5.4"/></svg>
@@ -357,6 +383,7 @@ html[data-theme="dark"] .autherr{background:#3a2320; color:#ff9d94}
         <button id="tabRegister" type="button">Daftar Toko Baru</button>
       </div>
       <div class="autherr" id="authErr"></div>
+      <div class="authok" id="authOk"></div>
       <label for="authShop">Nama toko</label>
       <div class="field">
         <svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 9.8V20h12V9.8"/><path d="M10 20v-5h4v5"/></svg>
@@ -372,6 +399,9 @@ html[data-theme="dark"] .autherr{background:#3a2320; color:#ff9d94}
         <svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
         <input id="authPass" type="password" placeholder="Min. 6 karakter">
       </div>
+      <p style="text-align:right; margin:0 0 10px">
+        <a href="#" id="authForgot" class="skiplink small">Lupa password?</a>
+      </p>
       <button class="btn block" id="authSubmit" style="padding:14px; font-size:16px; margin-top:4px">Masuk</button>
       <p class="small muted" style="text-align:center; margin:14px 0 2px">
         <a href="#" id="authLocal" class="skiplink">Lewati — mode lokal saja</a>
@@ -543,8 +573,23 @@ function seedData(){
   };
 }
 
+/* Keadaan awal pengguna baru: BENAR-BENAR KOSONG (tanpa produk/transaksi contoh).
+   Data contoh hanya muncul bila diminta lewat tombol "Muat Data Contoh". */
+function emptyData(){
+  return {
+    settings:{shopName:"Toko Saya", shopAddr:"", shopWa:"", receiptFooter:"Terima kasih sudah belanja!", accent:"#2563eb", lowStock:10, theme:"light"},
+    categories:[
+      {id:"c1", name:"Bakso & Olahan Ikan"},
+      {id:"c2", name:"Sosis & Nugget"},
+      {id:"c3", name:"Dimsum"},
+      {id:"c4", name:"Sayur & Lainnya"},
+    ],
+    products:[], transactions:[], held:[], stockMoves:[],
+  };
+}
+
 let DB;
-try{ DB = JSON.parse(localStorage.getItem(LS_KEY)) || seedData(); }catch(e){ DB = seedData(); }
+try{ DB = JSON.parse(localStorage.getItem(LS_KEY)) || emptyData(); }catch(e){ DB = emptyData(); }
 if(!DB._updatedAt) DB._updatedAt = Date.now();
 
 /* ---------- Sinkronisasi real-time Firebase (Firestore) ----------
@@ -574,7 +619,7 @@ function pushNow(){
 }
 let fbDb = null, fbUnsub = null, currentUser = null, localOnly = false, pendingShopName = "";
 function initFirebase(){
-  if(!window.firebase || !FIREBASE_CONFIG.apiKey){ setSync("Mode lokal"); updateAccountUI(); return; }
+  if(!window.firebase || !FIREBASE_CONFIG.apiKey){ hideAuthGate(); setSync("Mode lokal"); updateAccountUI(); return; }
   try{
     firebase.initializeApp(FIREBASE_CONFIG);
     fbDb = firebase.firestore();
@@ -590,7 +635,7 @@ function initFirebase(){
         else setSync("Mode lokal");
       }
     });
-  }catch(e){ setSync("Mode lokal"); }
+  }catch(e){ hideAuthGate(); setSync("Mode lokal"); }
 }
 function subscribeTenant(uid){
   fbDoc = fbDb.collection("toko").doc(uid);
@@ -619,20 +664,26 @@ let authMode = "login";
 function showAuthGate(){ document.getElementById("authGate").classList.add("show"); }
 function hideAuthGate(){ document.getElementById("authGate").classList.remove("show"); }
 function authShowErr(msg){ const e = document.getElementById("authErr"); e.textContent = msg || ""; e.style.display = msg ? "block" : "none"; }
+function authShowOk(msg){ const e = document.getElementById("authOk"); e.textContent = msg || ""; e.style.display = msg ? "block" : "none"; }
+const emailValid = em => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em || "");
 function setAuthMode(m){
   authMode = m;
   document.getElementById("tabLogin").classList.toggle("on", m === "login");
   document.getElementById("tabRegister").classList.toggle("on", m === "register");
   document.getElementById("authShop").disabled = (m === "login");
   document.getElementById("authSubmit").textContent = (m === "login") ? "Masuk" : "Daftar & Masuk";
-  authShowErr("");
+  document.getElementById("authForgot").style.display = (m === "login") ? "" : "none";
+  authShowErr(""); authShowOk("");
 }
 function authErrText(e){
   const c = (e && e.code) || "";
   if(c.includes("email-already-in-use")) return "Email ini sudah terdaftar. Coba Masuk.";
   if(c.includes("invalid-email")) return "Format email tidak valid.";
   if(c.includes("weak-password")) return "Password terlalu lemah (minimal 6 karakter).";
-  if(c.includes("invalid-credential") || c.includes("wrong-password") || c.includes("user-not-found")) return "Email atau password salah.";
+  if(c.includes("user-not-found")) return "Email ini belum terdaftar. Coba Daftar Toko Baru.";
+  if(c.includes("invalid-credential") || c.includes("wrong-password")) return "Email atau password salah.";
+  if(c.includes("requires-recent-login")) return "Demi keamanan, keluar lalu masuk lagi, kemudian ulangi.";
+  if(c.includes("too-many-requests")) return "Terlalu banyak percobaan. Tunggu beberapa menit lalu coba lagi.";
   if(c.includes("unauthorized-domain")) return "Domain ini belum diizinkan di Firebase (Authentication > Settings > Authorized domains).";
   if(c.includes("operation-not-allowed")) return "Login email/password belum diaktifkan di Firebase Console (Authentication > Sign-in method).";
   if(c.includes("network")) return "Jaringan bermasalah. Periksa koneksi internet.";
@@ -642,13 +693,18 @@ async function authSubmit(){
   const email = document.getElementById("authEmail").value.trim();
   const pass = document.getElementById("authPass").value;
   const shop = document.getElementById("authShop").value.trim();
-  if(!email || !pass){ authShowErr("Email dan password wajib diisi."); return; }
+  if(!emailValid(email)){ authShowErr("Format email belum benar — contoh: nama@toko.com"); return; }
+  if(!pass){ authShowErr("Password wajib diisi."); return; }
+  if(authMode === "register" && pass.length < 6){ authShowErr("Password minimal 6 karakter."); return; }
+  authShowOk("");
   const btn = document.getElementById("authSubmit");
   btn.disabled = true; btn.textContent = "Memproses...";
   try{
     if(authMode === "register"){
       pendingShopName = shop || "Toko Saya";
       await firebase.auth().createUserWithEmailAndPassword(email, pass);
+      try{ const cu = firebase.auth().currentUser; if(cu) await cu.sendEmailVerification(); }catch(e){}
+      setTimeout(()=>alert("Pendaftaran berhasil! Email verifikasi sudah dikirim ke " + email + " — cek inbox/spam dan klik tautannya untuk mengamankan akunmu."), 700);
     } else {
       await firebase.auth().signInWithEmailAndPassword(email, pass);
     }
@@ -667,6 +723,12 @@ function updateAccountUI(){
     info.textContent = "Mode lokal (tanpa akun). Data hanya tersimpan di perangkat ini.";
     out.style.display = "none"; open.style.display = "";
   }
+  const vb = document.getElementById("verifyBar");
+  if(vb) vb.style.display = (currentUser && !currentUser.emailVerified) ? "flex" : "none";
+  const lt = document.getElementById("logoutTop");
+  if(lt) lt.style.display = currentUser ? "" : "none";
+  const dz = document.getElementById("deleteZone");
+  if(dz) dz.style.display = currentUser ? "" : "none";
 }
 save();
 
@@ -1113,6 +1175,13 @@ document.getElementById("resetAll").onclick = ()=>{
   save(); pushNow(); renderAll();
   alert("Selesai. Toko mulai dari nol — silakan tambah produk pertamamu di menu Produk & Stok.");
 };
+document.getElementById("loadDemo").onclick = ()=>{
+  if(!confirm("Isi aplikasi dengan data contoh (10 produk + transaksi contoh)? Data produk/transaksi yang sudah ada akan diganti. Nama toko dan pengaturanmu tetap.")) return;
+  const s = seedData();
+  DB.categories = s.categories; DB.products = s.products; DB.transactions = s.transactions; DB.held = []; DB.stockMoves = []; cart = [];
+  save(); pushNow(); renderAll();
+  alert("Data contoh dimuat. Hapus lagi kapan saja lewat tombol reset di atas.");
+};
 
 /* ============================================================ INIT */
 function renderAll(){ renderKasir(); renderProduk(); renderRiwayat(); renderLaporan(); renderAnalisa(); }
@@ -1122,11 +1191,70 @@ document.getElementById("tabRegister").addEventListener("click", ()=>setAuthMode
 document.getElementById("authSubmit").addEventListener("click", authSubmit);
 document.getElementById("authLocal").addEventListener("click", e=>{ e.preventDefault(); localOnly = true; hideAuthGate(); setSync("Mode lokal"); });
 document.getElementById("loginOpenBtn").addEventListener("click", ()=>{ localOnly = false; showAuthGate(); });
-document.getElementById("logoutBtn").addEventListener("click", async ()=>{
+async function doLogout(){
   if(!confirm("Keluar dari akun? Data lokal di perangkat ini akan dibersihkan (data di awan tetap aman).")) return;
   try{ await firebase.auth().signOut(); }catch(e){}
   try{ localStorage.removeItem(LS_KEY); }catch(e){}
   location.reload();
+}
+document.getElementById("logoutBtn").addEventListener("click", doLogout);
+document.getElementById("logoutTop").addEventListener("click", doLogout);
+document.getElementById("authForgot").addEventListener("click", async e=>{
+  e.preventDefault();
+  const email = document.getElementById("authEmail").value.trim();
+  if(!emailValid(email)){ authShowOk(""); authShowErr("Isi email yang benar dulu, lalu ketuk Lupa password lagi."); return; }
+  try{
+    await firebase.auth().sendPasswordResetEmail(email);
+    authShowErr("");
+    authShowOk("Email reset terkirim ke " + email + ". Cek inbox/spam, lalu buat password baru dari tautan di email itu.");
+  }catch(err){ authShowOk(""); authShowErr(authErrText(err)); }
+});
+document.getElementById("vbResend").addEventListener("click", async ()=>{
+  if(!currentUser) return;
+  try{ await currentUser.sendEmailVerification(); alert("Email verifikasi dikirim ulang ke " + currentUser.email + ". Cek inbox/spam."); }
+  catch(e){ alert(authErrText(e)); }
+});
+document.getElementById("vbRefresh").addEventListener("click", async ()=>{
+  if(!currentUser) return;
+  try{
+    await currentUser.reload();
+    currentUser = firebase.auth().currentUser;
+    updateAccountUI();
+    if(currentUser && currentUser.emailVerified) alert("Email terverifikasi. Akunmu aman. Terima kasih!");
+    else alert("Status verifikasi belum berubah. Pastikan kamu sudah mengklik tautan di email verifikasi.");
+  }catch(e){}
+});
+document.getElementById("deleteAccountBtn").addEventListener("click", ()=>{
+  document.getElementById("deletePanel").style.display = "block";
+  document.getElementById("deletePass").focus();
+});
+document.getElementById("deleteCancelBtn").addEventListener("click", ()=>{
+  document.getElementById("deletePanel").style.display = "none";
+  document.getElementById("deletePass").value = "";
+});
+document.getElementById("deleteConfirmBtn").addEventListener("click", async ()=>{
+  const pass = document.getElementById("deletePass").value;
+  if(!pass){ alert("Isi password dulu untuk konfirmasi."); return; }
+  if(!confirm("Yakin hapus akun dan SEMUA data toko secara permanen? Ini tidak bisa dibatalkan.")) return;
+  const user = window.firebase ? firebase.auth().currentUser : null;
+  if(!user){ alert("Tidak ada akun yang masuk."); return; }
+  const btn = document.getElementById("deleteConfirmBtn");
+  btn.disabled = true; btn.textContent = "Menghapus...";
+  try{
+    const cred = firebase.auth.EmailAuthProvider.credential(user.email, pass);
+    await user.reauthenticateWithCredential(cred);
+    if(fbDoc){
+      if(fbUnsub){ fbUnsub(); fbUnsub = null; }
+      await fbDoc.delete(); fbDoc = null;
+    }
+    await user.delete();
+    try{ localStorage.removeItem(LS_KEY); }catch(e){}
+    alert("Akun dan semua data tokomu sudah dihapus dari Kasir Onga. Emailmu bisa dipakai daftar lagi kapan saja. Terima kasih sudah memakai Kasir Onga.");
+    location.reload();
+  }catch(e){
+    btn.disabled = false; btn.textContent = "Hapus Permanen";
+    alert("Gagal menghapus akun: " + authErrText(e));
+  }
 });
 
 (function init(){
