@@ -112,6 +112,18 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .bars .bar span{font-size:11px; color:var(--muted); white-space:nowrap}
 .bars .bar b{font-size:11px}
 
+/* Gerbang masuk / daftar (multi-toko) */
+.authgate{position:fixed; inset:0; z-index:300; background:var(--bg); display:none; align-items:flex-start; justify-content:center; overflow:auto; padding:28px 14px}
+.authgate.show{display:flex}
+.authgate .box{width:100%; max-width:400px; background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:22px 18px; box-shadow:var(--shadow)}
+.authgate .logo{font-size:24px; font-weight:800; text-align:center}
+.authgate .tag{text-align:center; color:var(--muted); margin:4px 0 16px}
+.authtabs{display:flex; gap:8px; margin-bottom:14px}
+.authtabs button{flex:1; padding:10px; border-radius:10px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-weight:700; cursor:pointer}
+.authtabs button.on{background:var(--accent); color:#fff; border-color:var(--accent)}
+.autherr{background:#fdecea; color:#a4261f; border-radius:10px; padding:9px 11px; font-size:13.5px; margin-bottom:10px; display:none}
+html[data-theme="dark"] .autherr{background:#3a2320; color:#ff9d94}
+
 @media print{
   body *{visibility:hidden}
   #receiptPrint, #receiptPrint *{visibility:visible}
@@ -152,6 +164,7 @@ td.num,th.num{text-align:right; white-space:nowrap}
 
 <header class="topbar">
   <div class="brand" id="shopNameTop">Kasir Onga</div>
+  <span id="syncStatus" style="background:rgba(255,255,255,.18); padding:5px 10px; border-radius:999px; font-size:12px; white-space:nowrap">Mode lokal</span>
   <button class="iconbtn" id="themeToggle" title="Mode terang/gelap">🌙</button>
 </header>
 
@@ -275,6 +288,14 @@ td.num,th.num{text-align:right; white-space:nowrap}
   <!-- ================= PENGATURAN ================= -->
   <section class="page" id="page-pengaturan">
     <h2>Pengaturan</h2>
+    <div class="card" style="max-width:560px; margin-bottom:14px">
+      <h3 style="margin-top:0">Akun Toko</h3>
+      <p class="small" id="accountInfo">Mode lokal (tanpa akun).</p>
+      <div class="row">
+        <button class="btn ghost" id="loginOpenBtn">Masuk / Daftar</button>
+        <button class="btn red" id="logoutBtn" style="display:none">Keluar</button>
+      </div>
+    </div>
     <div class="card" style="max-width:560px">
       <label>Nama toko</label><input id="setShopName">
       <label>Alamat</label><input id="setShopAddr">
@@ -294,11 +315,34 @@ td.num,th.num{text-align:right; white-space:nowrap}
         <button class="btn" id="themeToggle2" style="flex:1">🌙/☀️ Ganti Mode</button>
       </div>
       <hr style="border:none; border-top:1px solid var(--border); margin:18px 0">
-      <p class="small muted">Versi GitHub Pages: data tersimpan <b>lokal di perangkat ini</b> (browser/APK yang sama). Cetak struk memakai sistem cetak perangkat — di APK Android tombol printer di kanan atas juga bisa dipakai. Untuk printer Bluetooth, hubungkan printer ke HP dan pilih saat dialog cetak muncul.</p>
+      <p class="small muted">Database: bila Firebase terhubung (indikator "Real-time aktif" di atas), data tersinkron real-time antar semua perangkat (web &amp; APK) dan tersimpan di proyek Firebase milikmu; perubahan offline akan terkirim saat online lagi. Bila indikator "Mode lokal", data hanya tersimpan di perangkat ini. Cetak struk memakai sistem cetak perangkat. Untuk printer Bluetooth, hubungkan printer ke HP dan pilih saat dialog cetak muncul.</p>
       <button class="btn red block" id="resetData">Hapus Semua Data &amp; Kembalikan Contoh</button>
     </div>
   </section>
 </main>
+
+<!-- ================= GERBANG MASUK / DAFTAR (MULTI-TOKO) ================= -->
+<div class="authgate" id="authGate">
+  <div class="box">
+    <div class="logo">Kasir Onga</div>
+    <p class="tag">Satu akun untuk satu toko. Data tokomu tersinkron real-time di semua perangkatmu.</p>
+    <div class="authtabs">
+      <button id="tabLogin" class="on" type="button">Masuk</button>
+      <button id="tabRegister" type="button">Daftar Toko Baru</button>
+    </div>
+    <div class="autherr" id="authErr"></div>
+    <label>Nama toko <span class="muted">(khusus daftar)</span></label>
+    <input id="authShop" placeholder="cth: Jajan Frozen Food" style="margin-bottom:10px" disabled>
+    <label>Email</label>
+    <input id="authEmail" type="email" placeholder="email@toko.com" style="margin-bottom:10px">
+    <label>Password</label>
+    <input id="authPass" type="password" placeholder="Minimal 6 karakter" style="margin-bottom:14px">
+    <button class="btn block" id="authSubmit" style="padding:14px; font-size:16px">Masuk</button>
+    <p class="small muted" style="text-align:center; margin-top:14px">
+      <a href="#" id="authLocal">Lewati — pakai data lokal perangkat ini saja</a>
+    </p>
+  </div>
+</div>
 
 <!-- ================= MODAL STRUK ================= -->
 <div class="modal" id="receiptModal">
@@ -379,6 +423,24 @@ td.num,th.num{text-align:right; white-space:nowrap}
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script>
+/* ============================================================
+   KONFIGURASI FIREBASE — tempel firebaseConfig dari Firebase
+   Console di sini (Project settings → Your apps → Web app).
+   Ini BUKAN password; ini identitas publik aplikasi web.
+   ============================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCfMLArCiPKYmC-UKesDczoFNjidPgNmb4",
+  authDomain: "kasir-onga.firebaseapp.com",
+  projectId: "kasir-onga",
+  storageBucket: "kasir-onga.firebasestorage.app",
+  messagingSenderId: "258687282846",
+  appId: "1:258687282846:web:46d21b416c560441d8d58f"
+};
+</script>
 <script>
 "use strict";
 /* ============================================================
@@ -441,7 +503,129 @@ function seedData(){
 
 let DB;
 try{ DB = JSON.parse(localStorage.getItem(LS_KEY)) || seedData(); }catch(e){ DB = seedData(); }
-function save(){ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }
+if(!DB._updatedAt) DB._updatedAt = Date.now();
+
+/* ---------- Sinkronisasi real-time Firebase (Firestore) ----------
+   Seluruh state aplikasi disimpan sebagai satu dokumen
+   kasironga/main. Perangkat lain yang membuka aplikasi akan
+   menerima perubahan lewat onSnapshot (real-time). Bila
+   FIREBASE_CONFIG kosong, aplikasi berjalan mode lokal. */
+let fbDoc = null, applyingRemote = false, pushTimer = null;
+function setSync(txt){ const el = document.getElementById("syncStatus"); if(el) el.textContent = txt; }
+function save(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){}
+  schedulePush();
+}
+function schedulePush(){
+  if(!fbDoc || applyingRemote) return;
+  setSync("Menyimpan...");
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushNow, 400);
+}
+function pushNow(){
+  if(!fbDoc) return;
+  DB._updatedAt = Date.now();
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){}
+  fbDoc.set(DB)
+    .then(()=>setSync("Real-time aktif"))
+    .catch(()=>setSync("Gagal simpan / offline"));
+}
+let fbDb = null, fbUnsub = null, currentUser = null, localOnly = false, pendingShopName = "";
+function initFirebase(){
+  if(!window.firebase || !FIREBASE_CONFIG.apiKey){ setSync("Mode lokal"); updateAccountUI(); return; }
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    fbDb = firebase.firestore();
+    try{ fbDb.enablePersistence({synchronizeTabs:true}).catch(()=>{}); }catch(e){}
+    firebase.auth().onAuthStateChanged(user=>{
+      currentUser = user || null;
+      updateAccountUI();
+      if(user){ hideAuthGate(); subscribeTenant(user.uid); }
+      else{
+        if(fbUnsub){ fbUnsub(); fbUnsub = null; }
+        fbDoc = null;
+        if(!localOnly){ showAuthGate(); setSync("Belum masuk"); }
+        else setSync("Mode lokal");
+      }
+    });
+  }catch(e){ setSync("Mode lokal"); }
+}
+function subscribeTenant(uid){
+  fbDoc = fbDb.collection("toko").doc(uid);
+  if(fbUnsub) fbUnsub();
+  fbUnsub = fbDoc.onSnapshot(snap=>{
+    if(snap.metadata.hasPendingWrites) return;
+    if(!snap.exists){
+      if(pendingShopName){ DB.settings.shopName = pendingShopName; pendingShopName = ""; }
+      pushNow(); applyTheme(); syncSettingsForm(); renderAll(); updateAccountUI();
+      return;
+    }
+    const remote = snap.data();
+    if(remote && (remote._updatedAt||0) > (DB._updatedAt||0)){
+      applyingRemote = true;
+      DB = remote;
+      try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){}
+      applyingRemote = false;
+      applyTheme(); syncSettingsForm(); renderAll();
+    }
+    setSync("Real-time aktif");
+  }, ()=> setSync("Koneksi database gagal"));
+}
+
+/* ---------- Masuk / Daftar (satu akun = satu toko) ---------- */
+let authMode = "login";
+function showAuthGate(){ document.getElementById("authGate").classList.add("show"); }
+function hideAuthGate(){ document.getElementById("authGate").classList.remove("show"); }
+function authShowErr(msg){ const e = document.getElementById("authErr"); e.textContent = msg || ""; e.style.display = msg ? "block" : "none"; }
+function setAuthMode(m){
+  authMode = m;
+  document.getElementById("tabLogin").classList.toggle("on", m === "login");
+  document.getElementById("tabRegister").classList.toggle("on", m === "register");
+  document.getElementById("authShop").disabled = (m === "login");
+  document.getElementById("authSubmit").textContent = (m === "login") ? "Masuk" : "Daftar & Masuk";
+  authShowErr("");
+}
+function authErrText(e){
+  const c = (e && e.code) || "";
+  if(c.includes("email-already-in-use")) return "Email ini sudah terdaftar. Coba Masuk.";
+  if(c.includes("invalid-email")) return "Format email tidak valid.";
+  if(c.includes("weak-password")) return "Password terlalu lemah (minimal 6 karakter).";
+  if(c.includes("invalid-credential") || c.includes("wrong-password") || c.includes("user-not-found")) return "Email atau password salah.";
+  if(c.includes("unauthorized-domain")) return "Domain ini belum diizinkan di Firebase (Authentication > Settings > Authorized domains).";
+  if(c.includes("operation-not-allowed")) return "Login email/password belum diaktifkan di Firebase Console (Authentication > Sign-in method).";
+  if(c.includes("network")) return "Jaringan bermasalah. Periksa koneksi internet.";
+  return "Gagal: " + (e && e.message ? e.message : "coba lagi");
+}
+async function authSubmit(){
+  const email = document.getElementById("authEmail").value.trim();
+  const pass = document.getElementById("authPass").value;
+  const shop = document.getElementById("authShop").value.trim();
+  if(!email || !pass){ authShowErr("Email dan password wajib diisi."); return; }
+  const btn = document.getElementById("authSubmit");
+  btn.disabled = true; btn.textContent = "Memproses...";
+  try{
+    if(authMode === "register"){
+      pendingShopName = shop || "Toko Saya";
+      await firebase.auth().createUserWithEmailAndPassword(email, pass);
+    } else {
+      await firebase.auth().signInWithEmailAndPassword(email, pass);
+    }
+  }catch(e){ authShowErr(authErrText(e)); }
+  btn.disabled = false; setAuthMode(authMode);
+}
+function updateAccountUI(){
+  const info = document.getElementById("accountInfo");
+  const out = document.getElementById("logoutBtn");
+  const open = document.getElementById("loginOpenBtn");
+  if(!info) return;
+  if(currentUser){
+    info.textContent = "Masuk sebagai " + currentUser.email + " — data tersinkron real-time ke akun toko ini.";
+    out.style.display = ""; open.style.display = "none";
+  } else {
+    info.textContent = "Mode lokal (tanpa akun). Data hanya tersimpan di perangkat ini.";
+    out.style.display = "none"; open.style.display = "";
+  }
+}
 save();
 
 /* ---------- tema & aksen ---------- */
@@ -881,12 +1065,26 @@ document.getElementById("resetData").onclick = ()=>{
 
 /* ============================================================ INIT */
 function renderAll(){ renderKasir(); renderProduk(); renderRiwayat(); renderLaporan(); renderAnalisa(); }
+/* ---------- Ikatan gerbang masuk ---------- */
+document.getElementById("tabLogin").addEventListener("click", ()=>setAuthMode("login"));
+document.getElementById("tabRegister").addEventListener("click", ()=>setAuthMode("register"));
+document.getElementById("authSubmit").addEventListener("click", authSubmit);
+document.getElementById("authLocal").addEventListener("click", e=>{ e.preventDefault(); localOnly = true; hideAuthGate(); setSync("Mode lokal"); });
+document.getElementById("loginOpenBtn").addEventListener("click", ()=>{ localOnly = false; showAuthGate(); });
+document.getElementById("logoutBtn").addEventListener("click", async ()=>{
+  if(!confirm("Keluar dari akun? Data lokal di perangkat ini akan dibersihkan (data di awan tetap aman).")) return;
+  try{ await firebase.auth().signOut(); }catch(e){}
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  location.reload();
+});
+
 (function init(){
   applyTheme(); syncSettingsForm();
   const now = new Date();
   document.getElementById("repFrom").value = todayStr(new Date(now.getFullYear(), now.getMonth(), 1));
   document.getElementById("repTo").value = todayStr(now);
   renderAll();
+  initFirebase();
 })();
 </script>
 </body>
