@@ -392,6 +392,10 @@ body[data-page="kasir"] .headsearch{display:flex}
 .switch.on{background:var(--accent)}
 .switch.on i{left:22px}
 
+/* Tombol nominal cepat uang diterima */
+.cashchips{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+.cashchips .chip{cursor:pointer}
+
 /* Mode Kasir: sembunyikan fitur pemilik & data keuangan */
 body[data-role="kasir"] nav.tabs button[data-page="riwayat"],
 body[data-role="kasir"] nav.tabs button[data-page="laporan"],
@@ -473,7 +477,18 @@ body[data-role="kasir"] .verifybar{display:none!important}
         </div>
         <div id="cashBox">
           <label>Uang diterima</label>
-          <input id="cashInput" type="number" min="0" placeholder="0">
+          <input id="cashInput" type="text" inputmode="numeric" autocomplete="off" placeholder="0">
+          <div class="cashchips" id="cashChips">
+            <button type="button" class="chip" data-cash="pas">Uang Pas</button>
+            <button type="button" class="chip" data-cash="100000">100.000</button>
+            <button type="button" class="chip" data-cash="50000">50.000</button>
+            <button type="button" class="chip" data-cash="20000">20.000</button>
+            <button type="button" class="chip" data-cash="10000">10.000</button>
+            <button type="button" class="chip" data-cash="5000">5.000</button>
+            <button type="button" class="chip" data-cash="2000">2.000</button>
+            <button type="button" class="chip" data-cash="1000">1.000</button>
+            <button type="button" class="chip" data-cash="500">500</button>
+          </div>
           <div class="totrow" style="margin-top:6px"><span>Kembalian</span><b id="ctChange">Rp0</b></div>
         </div>
         <div class="grid" style="margin-top:12px">
@@ -1176,7 +1191,7 @@ function calcCart(){
   document.getElementById("ctSubtotal").textContent = rp(subtotal);
   document.getElementById("ctDiscount").textContent = "−"+rp(disc);
   document.getElementById("ctTotal").textContent = rp(total);
-  const cash = parseFloat(document.getElementById("cashInput").value)||0;
+  const cash = cashVal();
   document.getElementById("ctChange").textContent = rp(Math.max(0, cash-total));
   document.getElementById("cashBox").style.display = payMethod==="Tunai" ? "block" : "none";
   return {subtotal, disc, total};
@@ -1205,6 +1220,18 @@ document.getElementById("cartItems").addEventListener("click", e=>{
   renderKasir();
 });
 ["discountInput","discountType","cashInput"].forEach(id=>document.getElementById(id).addEventListener("input", calcCart));
+/* Uang diterima: format ribuan (titik) + tombol nominal cepat */
+function cashVal(){ return parseInt((document.getElementById("cashInput").value||"").replace(/[^\d]/g,""), 10) || 0; }
+function cashSet(n){ document.getElementById("cashInput").value = n ? Number(n).toLocaleString("id-ID") : ""; calcCart(); }
+document.getElementById("cashInput").addEventListener("input", e=>{
+  const raw = e.target.value.replace(/[^\d]/g,"");
+  e.target.value = raw ? Number(raw).toLocaleString("id-ID") : "";
+});
+document.getElementById("cashChips").addEventListener("click", e=>{
+  const b = e.target.closest("[data-cash]"); if(!b) return;
+  if(b.dataset.cash === "pas") cashSet(calcCart().total);
+  else cashSet(cashVal() + parseInt(b.dataset.cash, 10));
+});
 document.getElementById("payMethods").addEventListener("click", e=>{
   const b = e.target.closest("[data-pay]"); if(!b) return;
   payMethod = b.dataset.pay;
@@ -1240,7 +1267,7 @@ document.getElementById("holdList").addEventListener("click", e=>{
 document.getElementById("payBtn").onclick = ()=>{
   if(!cart.length){ dlgAlert("Keranjang masih kosong."); return; }
   const {subtotal, disc, total} = calcCart();
-  const cash = payMethod==="Tunai" ? (parseFloat(document.getElementById("cashInput").value)||0) : total;
+  const cash = payMethod==="Tunai" ? cashVal() : total;
   if(payMethod==="Tunai" && cash < total){ dlgAlert("Uang diterima kurang dari total."); return; }
   const items = cart.map(c=>{ const p=prodById(c.productId); return {productId:p.id, name:p.name, price:p.price, cost:p.cost, qty:c.qty}; });
   const tx = {id:uid(), ts:Date.now(), items, subtotal, discount:disc, total, pay:payMethod, cash, change:cash-total, voided:false};
