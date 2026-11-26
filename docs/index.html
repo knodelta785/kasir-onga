@@ -92,7 +92,7 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .paygrid button.active{background:var(--accent); color:#fff; border-color:var(--accent)}
 
 /* ===== Modal ===== */
-.modal{position:fixed; inset:0; background:rgba(2,6,23,.55); display:none; align-items:flex-end; justify-content:center; z-index:50}
+.modal{position:fixed; inset:0; background:rgba(2,6,23,.55); display:none; align-items:flex-end; justify-content:center; z-index:90}
 .modal.open{display:flex}
 .modal .sheet{background:var(--surface); width:100%; max-width:560px; max-height:92vh; overflow:auto; border-radius:18px 18px 0 0; padding:18px}
 @media(min-width:640px){ .modal{align-items:center} .modal .sheet{border-radius:18px} }
@@ -374,6 +374,28 @@ body[data-page="kasir"] .headsearch{display:flex}
   header.topbar{position:static}
   nav.tabs{top:0}
 }
+
+/* Avatar & menu akun */
+.avatarbtn{width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,.25); color:#fff; font-weight:800; font-size:16px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; flex:none; box-shadow:inset 0 0 0 1px rgba(255,255,255,.35); font-family:inherit}
+.avatarbtn img{width:100%; height:100%; object-fit:cover}
+.acct-head{display:flex; align-items:center; gap:13px; padding-bottom:14px}
+.avatarbig{width:56px; height:56px; border-radius:50%; background:var(--accent-soft); color:var(--accent); font-weight:800; font-size:22px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex:none}
+.avatarbig img{width:100%; height:100%; object-fit:cover}
+.acct-shop{font-size:17px; font-weight:800}
+.menurow{display:flex; align-items:center; gap:12px; padding:12px 2px; font-weight:600; font-size:15px; cursor:pointer; border-top:1px solid color-mix(in srgb, var(--border) 55%, transparent)}
+.menurow .mic{width:37px; height:37px; border-radius:11px; background:var(--surface2); color:var(--text); display:flex; align-items:center; justify-content:center; flex:none}
+.menurow .chev{margin-left:auto; color:var(--muted); font-size:21px; font-weight:400}
+.menurow.danger{color:var(--red)}
+.menurow.danger .mic{background:color-mix(in srgb, var(--red) 10%, transparent); color:var(--red)}
+.switch{margin-left:auto; width:47px; height:28px; border-radius:99px; background:var(--border); position:relative; transition:background .2s; flex:none}
+.switch i{position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; transition:left .2s; box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.switch.on{background:var(--accent)}
+.switch.on i{left:22px}
+
+/* Dialog dalam aplikasi */
+.dlg{text-align:center}
+.dlg p{font-size:16.5px; font-weight:700; line-height:1.45; margin:4px 0 2px}
+.dlg .row{margin-top:18px}
 </style>
 </head>
 <body data-page="kasir">
@@ -382,9 +404,9 @@ body[data-page="kasir"] .headsearch{display:flex}
   <div class="brandrow">
     <div class="brand" id="shopNameTop">Kasir Onga</div>
     <span id="syncStatus" style="background:rgba(255,255,255,.18); padding:5px 10px; border-radius:999px; font-size:12px; white-space:nowrap">Mode lokal</span>
-    <button class="iconbtn" id="themeToggle" title="Mode terang/gelap">🌙</button>
-    <button class="iconbtn" id="logoutTop" title="Keluar dari akun" style="display:none">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M12 3v8"/><path d="M6.3 6.5a8 8 0 1 0 11.4 0"/></svg>
+    <button class="avatarbtn" id="avatarBtn" title="Akun">
+      <img id="avatarImg" alt="" style="display:none">
+      <span id="avatarInitial">T</span>
     </button>
   </div>
   <div class="headsearch">
@@ -551,7 +573,7 @@ body[data-page="kasir"] .headsearch{display:flex}
       <input id="setLowStock" type="number" min="0">
       <div class="row" style="margin-top:16px">
         <button class="btn primary" id="saveSettings" style="flex:1">Simpan</button>
-        <button class="btn" id="themeToggle2" style="flex:1">🌙/☀️ Ganti Mode</button>
+        <button class="btn" id="themeToggle2" style="flex:1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Mode Terang / Gelap</button>
       </div>
       <hr style="border:none; border-top:1px solid var(--border); margin:18px 0">
       <p class="small muted">Data tersinkron real-time ke semua perangkatmu. Struk dicetak lewat printer yang terhubung ke perangkat ini.</p>
@@ -565,6 +587,53 @@ body[data-page="kasir"] .headsearch{display:flex}
 </main>
 
 <!-- ================= GERBANG MASUK / DAFTAR (MULTI-TOKO) ================= -->
+<div class="modal" id="accountModal">
+  <div class="sheet">
+    <div class="acct-head">
+      <div class="avatarbig"><img id="amImg" alt="" style="display:none"><span id="amInitial">T</span></div>
+      <div style="flex:1; min-width:0">
+        <div class="acct-shop" id="amShop">Toko Saya</div>
+        <div class="small muted" id="amEmail">Mode lokal</div>
+      </div>
+    </div>
+    <div class="menurow" id="amAvatarRow">
+      <span class="mic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+      Ganti Foto Profil <span class="chev">›</span>
+    </div>
+    <div class="menurow" id="amAvatarDel" style="display:none">
+      <span class="mic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+      Hapus Foto Profil <span class="chev">›</span>
+    </div>
+    <div class="menurow" id="amThemeRow">
+      <span class="mic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+      Mode Gelap <span class="switch" id="amSwitch"><i></i></span>
+    </div>
+    <div class="menurow" id="amSettingsRow">
+      <span class="mic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span>
+      Pengaturan <span class="chev">›</span>
+    </div>
+    <div class="menurow" id="amLoginRow" style="display:none">
+      <span class="mic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></span>
+      Masuk / Daftar <span class="chev">›</span>
+    </div>
+    <div class="menurow danger" id="amLogoutRow" style="display:none">
+      <span class="mic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg></span>
+      Keluar
+    </div>
+    <input type="file" id="avatarFile" accept="image/*" style="display:none">
+  </div>
+</div>
+
+<div class="modal" id="dlgModal">
+  <div class="sheet dlg">
+    <p id="dlgMsg"></p>
+    <div class="row">
+      <button class="btn block" id="dlgCancel">Batal</button>
+      <button class="btn primary block" id="dlgOk">OK</button>
+    </div>
+  </div>
+</div>
+
 <div class="authgate show" id="authGate">
   <div class="wrap">
     <div class="brandmark">
@@ -899,7 +968,7 @@ async function authSubmit(){
       pendingShopName = shop || "Toko Saya";
       await firebase.auth().createUserWithEmailAndPassword(email, pass);
       try{ const cu = firebase.auth().currentUser; if(cu) await cu.sendEmailVerification(); }catch(e){}
-      setTimeout(()=>alert("Pendaftaran berhasil! Tautan verifikasi sudah dikirim ke " + email + " — cek inbox/spam."), 700);
+      setTimeout(()=>dlgAlert("Pendaftaran berhasil! Cek emailmu untuk verifikasi."), 700);
     } else {
       await firebase.auth().signInWithEmailAndPassword(email, pass);
     }
@@ -921,8 +990,12 @@ function updateAccountUI(){
   }
   const vb = document.getElementById("verifyBar");
   if(vb) vb.style.display = (currentUser && !currentUser.emailVerified) ? "flex" : "none";
-  const lt = document.getElementById("logoutTop");
-  if(lt) lt.style.display = currentUser ? "" : "none";
+  const lr = document.getElementById("amLogoutRow");
+  if(lr) lr.style.display = currentUser ? "" : "none";
+  const li = document.getElementById("amLoginRow");
+  if(li) li.style.display = currentUser ? "none" : "";
+  const ae = document.getElementById("amEmail");
+  if(ae) ae.textContent = currentUser ? currentUser.email : "Mode lokal";
   const dz = document.getElementById("deleteZone");
   if(dz) dz.style.display = currentUser ? "" : "none";
 }
@@ -931,13 +1004,14 @@ save();
 /* ---------- tema & aksen ---------- */
 function applyTheme(){
   document.documentElement.dataset.theme = DB.settings.theme;
-  document.getElementById("themeToggle").textContent = DB.settings.theme==="dark" ? "☀️" : "🌙";
+  const sw = document.getElementById("amSwitch");
+  if(sw) sw.classList.toggle("on", DB.settings.theme==="dark");
+  renderAvatar();
   document.documentElement.style.setProperty("--accent", DB.settings.accent);
   document.documentElement.style.setProperty("--accent-dark", DB.settings.accent);
   document.getElementById("shopNameTop").textContent = DB.settings.shopName + " — Kasir Onga";
 }
 function toggleTheme(){ DB.settings.theme = DB.settings.theme==="dark" ? "light" : "dark"; save(); applyTheme(); syncSettingsForm(); }
-document.getElementById("themeToggle").onclick = toggleTheme;
 
 /* ---------- navigasi ---------- */
 document.getElementById("tabs").addEventListener("click", e=>{
@@ -951,6 +1025,26 @@ document.getElementById("tabs").addEventListener("click", e=>{
 /* ---------- modal ---------- */
 function openModal(id){ document.getElementById(id).classList.add("open"); }
 function closeModals(){ document.querySelectorAll(".modal").forEach(m=>m.classList.remove("open")); }
+
+/* ---------- dialog dalam aplikasi (pengganti alert/confirm bawaan browser) ---------- */
+let dlgResolve = null;
+function dlgShow(msg, okText, cancelText){
+  return new Promise(res=>{
+    dlgResolve = res;
+    document.getElementById("dlgMsg").textContent = msg;
+    document.getElementById("dlgOk").textContent = okText;
+    const c = document.getElementById("dlgCancel");
+    c.style.display = cancelText ? "" : "none";
+    if(cancelText) c.textContent = cancelText;
+    openModal("dlgModal");
+  });
+}
+function dlgDone(v){ closeModals(); if(dlgResolve){ const r = dlgResolve; dlgResolve = null; r(v); } }
+const dlgAlert = msg => dlgShow(msg, "OK", null);
+const dlgConfirm = (msg, okText) => dlgShow(msg, okText || "Ya", "Batal");
+document.getElementById("dlgOk").onclick = ()=>dlgDone(true);
+document.getElementById("dlgCancel").onclick = ()=>dlgDone(false);
+document.getElementById("dlgModal").addEventListener("click", e=>{ if(e.target.id==="dlgModal") dlgDone(false); });
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick = closeModals);
 document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click", e=>{ if(e.target===m) closeModals(); }));
 
@@ -1046,10 +1140,10 @@ document.getElementById("payMethods").addEventListener("click", e=>{
 });
 document.getElementById("clearCartBtn").onclick = ()=>{ cart=[]; document.getElementById("discountInput").value=""; document.getElementById("cashInput").value=""; renderKasir(); };
 document.getElementById("holdBtn").onclick = ()=>{
-  if(!cart.length) return alert("Keranjang masih kosong.");
+  if(!cart.length){ dlgAlert("Keranjang masih kosong."); return; }
   DB.held.push({id:uid(), ts:Date.now(), cart:JSON.parse(JSON.stringify(cart)), discount:document.getElementById("discountInput").value, discountType:document.getElementById("discountType").value});
   save(); cart=[]; document.getElementById("discountInput").value=""; renderKasir();
-  alert("Pesanan ditahan.");
+  dlgAlert("Pesanan ditahan.");
 };
 document.getElementById("holdListBtn").onclick = ()=>{
   const box = document.getElementById("holdList");
@@ -1071,10 +1165,10 @@ document.getElementById("holdList").addEventListener("click", e=>{
   if(d){ DB.held = DB.held.filter(x=>x.id!==d.dataset.drop); save(); document.getElementById("holdListBtn").click(); renderKasir(); }
 });
 document.getElementById("payBtn").onclick = ()=>{
-  if(!cart.length) return alert("Keranjang masih kosong.");
+  if(!cart.length){ dlgAlert("Keranjang masih kosong."); return; }
   const {subtotal, disc, total} = calcCart();
   const cash = payMethod==="Tunai" ? (parseFloat(document.getElementById("cashInput").value)||0) : total;
-  if(payMethod==="Tunai" && cash < total) return alert("Uang diterima kurang dari total.");
+  if(payMethod==="Tunai" && cash < total){ dlgAlert("Uang diterima kurang dari total."); return; }
   const items = cart.map(c=>{ const p=prodById(c.productId); return {productId:p.id, name:p.name, price:p.price, cost:p.cost, qty:c.qty}; });
   const tx = {id:uid(), ts:Date.now(), items, subtotal, discount:disc, total, pay:payMethod, cash, change:cash-total, voided:false};
   items.forEach(it=>{ const p=prodById(it.productId); if(p) p.stock = Math.max(0, p.stock - it.qty); });
@@ -1162,7 +1256,7 @@ document.getElementById("productTable").addEventListener("click", e=>{
   }
   if(del){
     const p = prodById(del.dataset.delprod);
-    if(p && confirm(`Hapus produk "${p.name}"?`)){ DB.products = DB.products.filter(x=>x.id!==p.id); save(); renderAll(); }
+    if(p){ dlgConfirm(`Hapus produk "${p.name}"?`, "Hapus").then(ok=>{ if(ok){ DB.products = DB.products.filter(x=>x.id!==p.id); save(); renderAll(); } }); }
   }
   if(st){
     const p = prodById(st.dataset.stock); if(!p) return;
@@ -1175,7 +1269,7 @@ document.getElementById("productTable").addEventListener("click", e=>{
 });
 document.getElementById("pmSave").onclick = ()=>{
   const name = document.getElementById("pmName").value.trim();
-  if(!name) return alert("Nama produk wajib diisi.");
+  if(!name){ dlgAlert("Nama produk wajib diisi."); return; }
   const id = document.getElementById("pmId").value;
   const data = {name, sku:document.getElementById("pmSku").value.trim(), catId:document.getElementById("pmCat").value,
     emoji:document.getElementById("pmEmoji").value.trim()||"📦",
@@ -1206,7 +1300,7 @@ document.getElementById("addCatBtn").onclick = ()=>{
 };
 document.getElementById("catList").addEventListener("click", e=>{
   const d = e.target.closest("[data-delcat]"); if(!d) return;
-  if(DB.products.some(p=>p.catId===d.dataset.delcat)) return alert("Kategori masih dipakai produk. Pindahkan dulu produknya.");
+  if(DB.products.some(p=>p.catId===d.dataset.delcat)){ dlgAlert("Kategori masih dipakai produk."); return; }
   DB.categories = DB.categories.filter(c=>c.id!==d.dataset.delcat); save();
   document.getElementById("catManageBtn").click(); renderAll();
 });
@@ -1227,10 +1321,10 @@ function renderRiwayat(){
       <div class="small muted" style="margin-top:6px">${tx.items.map(it=>`${esc(it.name)} ×${it.qty}`).join(" • ")}</div>
     </div>`).join("") : `<div class="empty card">Belum ada transaksi.</div>`;
 }
-document.getElementById("txList").addEventListener("click", e=>{
+document.getElementById("txList").addEventListener("click", async e=>{
   const v = e.target.closest("[data-void]"); if(!v) return;
   const tx = DB.transactions.find(t=>t.id===v.dataset.void); if(!tx) return;
-  if(!confirm("Batalkan transaksi ini? Stok akan dikembalikan.")) return;
+  if(!await dlgConfirm("Batalkan transaksi ini?", "Ya")) return;
   tx.voided = true;
   tx.items.forEach(it=>{ const p=prodById(it.productId); if(p) p.stock += it.qty; });
   save(); renderAll();
@@ -1356,28 +1450,28 @@ document.getElementById("saveSettings").onclick = ()=>{
   s.receiptFooter = document.getElementById("setReceiptFooter").value.trim();
   s.accent = document.getElementById("setAccent").value;
   s.lowStock = parseInt(document.getElementById("setLowStock").value)||0;
-  save(); applyTheme(); alert("Pengaturan tersimpan.");
+  save(); applyTheme(); dlgAlert("Pengaturan tersimpan.");
 };
 document.getElementById("themeToggle2").onclick = toggleTheme;
-document.getElementById("resetTx").onclick = ()=>{
-  if(!confirm("Hapus semua transaksi? Produk dan stok tetap. Tidak bisa dibatalkan.")) return;
+document.getElementById("resetTx").onclick = async ()=>{
+  if(!await dlgConfirm("Hapus semua transaksi?", "Hapus")) return;
   DB.transactions = []; DB.held = []; DB.stockMoves = []; cart = [];
   save(); pushNow(); renderAll();
-  alert("Semua transaksi sudah dihapus. Produk dan stok tetap.");
+  dlgAlert("Transaksi dihapus.");
 };
-document.getElementById("resetAll").onclick = ()=>{
-  if(!confirm("Mulai dari nol? Semua produk dan transaksi dihapus permanen. Nama toko tetap.")) return;
-  if(!confirm("Sekali lagi: yakin hapus semua produk dan transaksi?")) return;
+document.getElementById("resetAll").onclick = async ()=>{
+  if(!await dlgConfirm("Mulai dari nol? Semua produk & transaksi dihapus.", "Mulai")) return;
+  if(!await dlgConfirm("Yakin? Tidak bisa kembali.", "Ya, Yakin")) return;
   DB.transactions = []; DB.held = []; DB.stockMoves = []; DB.products = []; cart = [];
   save(); pushNow(); renderAll();
-  alert("Selesai. Toko mulai dari nol — silakan tambah produk pertamamu di menu Produk & Stok.");
+  dlgAlert("Selesai — toko mulai dari nol.");
 };
-document.getElementById("loadDemo").onclick = ()=>{
-  if(!confirm("Isi dengan data contoh? Produk dan transaksi sekarang akan diganti.")) return;
+document.getElementById("loadDemo").onclick = async ()=>{
+  if(!await dlgConfirm("Isi dengan data contoh?", "Isi")) return;
   const s = seedData();
   DB.categories = s.categories; DB.products = s.products; DB.transactions = s.transactions; DB.held = []; DB.stockMoves = []; cart = [];
   save(); pushNow(); renderAll();
-  alert("Data contoh dimuat. Hapus lagi kapan saja lewat tombol reset di atas.");
+  dlgAlert("Data contoh dimuat.");
 };
 
 /* ============================================================ INIT */
@@ -1389,13 +1483,58 @@ document.getElementById("authSubmit").addEventListener("click", authSubmit);
 document.getElementById("authLocal").addEventListener("click", e=>{ e.preventDefault(); localOnly = true; hideAuthGate(); setSync("Mode lokal"); });
 document.getElementById("loginOpenBtn").addEventListener("click", ()=>{ localOnly = false; showAuthGate(); });
 async function doLogout(){
-  if(!confirm("Keluar dari akun? Data lokal di perangkat ini akan dibersihkan (data di awan tetap aman).")) return;
+  if(!await dlgConfirm("Keluar dari akun?", "Keluar")) return;
   try{ await firebase.auth().signOut(); }catch(e){}
   try{ localStorage.removeItem(LS_KEY); }catch(e){}
   location.reload();
 }
 document.getElementById("logoutBtn").addEventListener("click", doLogout);
-document.getElementById("logoutTop").addEventListener("click", doLogout);
+
+/* ---------- avatar & menu akun ---------- */
+function renderAvatar(){
+  const name = (DB.settings.shopName || "Toko").trim();
+  const initial = (name[0] || "T").toUpperCase();
+  const photo = DB.settings.avatar || "";
+  const img = document.getElementById("avatarImg"), ini = document.getElementById("avatarInitial");
+  if(img && ini){
+    if(photo){ img.src = photo; img.style.display = ""; ini.style.display = "none"; }
+    else { img.style.display = "none"; ini.style.display = ""; ini.textContent = initial; }
+  }
+  const amImg = document.getElementById("amImg"), amIni = document.getElementById("amInitial"), amShop = document.getElementById("amShop");
+  if(amImg && amIni){
+    if(photo){ amImg.src = photo; amImg.style.display = ""; amIni.style.display = "none"; }
+    else { amImg.style.display = "none"; amIni.style.display = ""; amIni.textContent = initial; }
+  }
+  if(amShop) amShop.textContent = name;
+  const del = document.getElementById("amAvatarDel");
+  if(del) del.style.display = photo ? "" : "none";
+}
+document.getElementById("avatarBtn").addEventListener("click", ()=>{ renderAvatar(); updateAccountUI(); openModal("accountModal"); });
+document.getElementById("amThemeRow").addEventListener("click", ()=>toggleTheme());
+document.getElementById("amSettingsRow").addEventListener("click", ()=>{ closeModals(); document.querySelector('button[data-page="pengaturan"]').click(); });
+document.getElementById("amLogoutRow").addEventListener("click", ()=>{ closeModals(); doLogout(); });
+document.getElementById("amLoginRow").addEventListener("click", ()=>{ closeModals(); localOnly = false; showAuthGate(); });
+document.getElementById("amAvatarRow").addEventListener("click", ()=>document.getElementById("avatarFile").click());
+document.getElementById("amAvatarDel").addEventListener("click", ()=>{ DB.settings.avatar = ""; save(); renderAvatar(); });
+document.getElementById("avatarFile").addEventListener("change", e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    const im = new Image();
+    im.onload = ()=>{
+      const cv = document.createElement("canvas");
+      const s = Math.min(1, 256 / Math.max(im.width, im.height));
+      cv.width = Math.round(im.width * s); cv.height = Math.round(im.height * s);
+      cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+      DB.settings.avatar = cv.toDataURL("image/jpeg", 0.85);
+      save(); renderAvatar();
+      dlgAlert("Foto profil diperbarui.");
+    };
+    im.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+  e.target.value = "";
+});
 document.getElementById("authForgot").addEventListener("click", async e=>{
   e.preventDefault();
   const email = document.getElementById("authEmail").value.trim();
@@ -1403,13 +1542,13 @@ document.getElementById("authForgot").addEventListener("click", async e=>{
   try{
     await firebase.auth().sendPasswordResetEmail(email);
     authShowErr("");
-    authShowOk("Email reset terkirim ke " + email + ". Cek inbox/spam, lalu buat password baru dari tautan di email itu.");
+    authShowOk("Email reset terkirim ke " + email + ". Cek inbox/spam.");
   }catch(err){ authShowOk(""); authShowErr(authErrText(err)); }
 });
 document.getElementById("vbResend").addEventListener("click", async ()=>{
   if(!currentUser) return;
-  try{ await currentUser.sendEmailVerification(); alert("Email verifikasi dikirim ulang ke " + currentUser.email + ". Cek inbox/spam."); }
-  catch(e){ alert(authErrText(e)); }
+  try{ await currentUser.sendEmailVerification(); dlgAlert("Email verifikasi terkirim ulang."); }
+  catch(e){ dlgAlert(authErrText(e)); }
 });
 document.getElementById("vbRefresh").addEventListener("click", async ()=>{
   if(!currentUser) return;
@@ -1417,8 +1556,8 @@ document.getElementById("vbRefresh").addEventListener("click", async ()=>{
     await currentUser.reload();
     currentUser = firebase.auth().currentUser;
     updateAccountUI();
-    if(currentUser && currentUser.emailVerified) alert("Email terverifikasi. Akunmu aman. Terima kasih!");
-    else alert("Status verifikasi belum berubah. Pastikan kamu sudah mengklik tautan di email verifikasi.");
+    if(currentUser && currentUser.emailVerified) dlgAlert("Email terverifikasi.");
+    else dlgAlert("Belum terverifikasi — klik tautan di email dulu.");
   }catch(e){}
 });
 document.getElementById("deleteAccountBtn").addEventListener("click", ()=>{
@@ -1431,10 +1570,10 @@ document.getElementById("deleteCancelBtn").addEventListener("click", ()=>{
 });
 document.getElementById("deleteConfirmBtn").addEventListener("click", async ()=>{
   const pass = document.getElementById("deletePass").value;
-  if(!pass){ alert("Isi password dulu untuk konfirmasi."); return; }
-  if(!confirm("Semua data toko dihapus permanen dan tidak bisa kembali. Sudah unduh laporan Excel yang diperlukan?")) return;
+  if(!pass){ dlgAlert("Isi password dulu."); return; }
+  if(!await dlgConfirm("Hapus akun + semua data? Tidak bisa kembali.", "Hapus Permanen")) return;
   const user = window.firebase ? firebase.auth().currentUser : null;
-  if(!user){ alert("Tidak ada akun yang masuk."); return; }
+  if(!user){ dlgAlert("Tidak ada akun yang masuk."); return; }
   const btn = document.getElementById("deleteConfirmBtn");
   btn.disabled = true; btn.textContent = "Menghapus...";
   try{
@@ -1446,11 +1585,11 @@ document.getElementById("deleteConfirmBtn").addEventListener("click", async ()=>
     }
     await user.delete();
     try{ localStorage.removeItem(LS_KEY); }catch(e){}
-    alert("Akun dan semua data tokomu sudah dihapus dari Kasir Onga. Emailmu bisa dipakai daftar lagi kapan saja. Terima kasih sudah memakai Kasir Onga.");
+    await dlgAlert("Akun dan data toko sudah dihapus.");
     location.reload();
   }catch(e){
     btn.disabled = false; btn.textContent = "Hapus Permanen";
-    alert("Gagal menghapus akun: " + authErrText(e));
+    dlgAlert("Gagal menghapus akun: " + authErrText(e));
   }
 });
 
