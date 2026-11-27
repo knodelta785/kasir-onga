@@ -79,6 +79,11 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .pdots{display:flex; gap:5px; justify-content:center; padding:6px 0 2px}
 .pdots i{width:7px; height:7px; border-radius:99px; background:var(--border)}
 .pdots i.on{width:18px; background:var(--accent)}
+.crop-stage{position:relative; width:min(78vw,300px); height:min(78vw,300px); margin:0 auto; overflow:hidden; border-radius:18px; background:#0f172a; touch-action:none}
+.crop-stage img{position:absolute; max-width:none; user-select:none; -webkit-user-select:none; -webkit-user-drag:none}
+.crop-ring{position:absolute; inset:0; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 400px rgba(2,6,23,.35); pointer-events:none}
+.crop-zoom{display:flex; align-items:center; gap:10px; margin-top:12px; font-weight:800; color:var(--muted)}
+.crop-zoom input{flex:1}
 .prod{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 10px; text-align:left; box-shadow:var(--shadow); position:relative; width:100%; min-width:0; overflow:hidden}
 .prod:active{transform:scale(.97)}
 .prod .emoji{font-size:30px}
@@ -699,6 +704,17 @@ body[data-role="kasir"] .verifybar{display:none!important}
   </div>
 </div>
 
+<div class="modal" id="cropModal" style="z-index:95">
+  <div class="sheet">
+    <h3 style="margin:0 0 10px">Sesuaikan Foto</h3>
+    <div class="crop-stage" id="cropStage"><img id="cropImg" alt="" draggable="false"><div class="crop-ring"></div></div>
+    <div class="crop-zoom"><span>−</span><input type="range" id="cropZoom" min="100" max="300" value="100"><span>+</span></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost" id="cropCancel">Batal</button>
+      <button class="btn primary" id="cropOk" style="flex:1">Pakai Foto</button>
+    </div>
+  </div>
+</div>
 <div class="modal" id="accountModal">
   <div class="sheet">
     <div class="acct-head">
@@ -1781,21 +1797,63 @@ document.getElementById("amAvatarDel").addEventListener("click", ()=>{ DB.settin
 document.getElementById("avatarFile").addEventListener("change", e=>{
   const f = e.target.files[0]; if(!f) return;
   const rd = new FileReader();
-  rd.onload = ()=>{
-    const im = new Image();
-    im.onload = ()=>{
-      const cv = document.createElement("canvas");
-      const s = Math.min(1, 256 / Math.max(im.width, im.height));
-      cv.width = Math.round(im.width * s); cv.height = Math.round(im.height * s);
-      cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
-      DB.settings.avatar = cv.toDataURL("image/jpeg", 0.85);
-      save(); renderAvatar();
-      dlgAlert("Foto profil diperbarui.");
-    };
-    im.src = rd.result;
-  };
+  rd.onload = ()=>openCrop(rd.result);
   rd.readAsDataURL(f);
   e.target.value = "";
+});
+
+/* ---------- Crop foto profil ---------- */
+const crop = {img:null, base:0, zoom:1, x:0, y:0, drag:null};
+function cropSize(){ return document.getElementById("cropStage").clientWidth; }
+function cropLayout(){
+  const S = cropSize(), im = crop.img; if(!im || !S) return;
+  const w = im.naturalWidth * crop.base * crop.zoom, h = im.naturalHeight * crop.base * crop.zoom;
+  crop.x = Math.min(0, Math.max(S - w, crop.x));
+  crop.y = Math.min(0, Math.max(S - h, crop.y));
+  const el = document.getElementById("cropImg");
+  el.style.width = w + "px"; el.style.height = h + "px";
+  el.style.left = crop.x + "px"; el.style.top = crop.y + "px";
+}
+function openCrop(dataUrl){
+  const im = new Image();
+  im.onload = ()=>{
+    crop.img = im; crop.zoom = 1;
+    document.getElementById("cropZoom").value = 100;
+    document.getElementById("cropImg").src = dataUrl;
+    document.getElementById("cropModal").style.display = "flex";
+    const S = cropSize();
+    crop.base = Math.max(S / im.naturalWidth, S / im.naturalHeight);
+    crop.x = (S - im.naturalWidth * crop.base) / 2;
+    crop.y = (S - im.naturalHeight * crop.base) / 2;
+    cropLayout();
+  };
+  im.src = dataUrl;
+}
+const cropStageEl = document.getElementById("cropStage");
+cropStageEl.addEventListener("dragstart", e=>e.preventDefault());
+cropStageEl.addEventListener("pointerdown", e=>{ crop.drag = {dx:e.clientX - crop.x, dy:e.clientY - crop.y}; cropStageEl.setPointerCapture(e.pointerId); });
+cropStageEl.addEventListener("pointermove", e=>{ if(!crop.drag) return; crop.x = e.clientX - crop.drag.dx; crop.y = e.clientY - crop.drag.dy; cropLayout(); });
+["pointerup","pointercancel"].forEach(ev=>cropStageEl.addEventListener(ev, ()=>crop.drag = null));
+document.getElementById("cropZoom").addEventListener("input", e=>{
+  const S = cropSize(), im = crop.img; if(!im) return;
+  const ow = im.naturalWidth * crop.base * crop.zoom, oh = im.naturalHeight * crop.base * crop.zoom;
+  const cx = (S/2 - crop.x) / ow, cy = (S/2 - crop.y) / oh;
+  crop.zoom = e.target.value / 100;
+  crop.x = S/2 - cx * im.naturalWidth * crop.base * crop.zoom;
+  crop.y = S/2 - cy * im.naturalHeight * crop.base * crop.zoom;
+  cropLayout();
+});
+document.getElementById("cropCancel").addEventListener("click", ()=>document.getElementById("cropModal").style.display = "none");
+document.getElementById("cropModal").addEventListener("click", e=>{ if(e.target.id === "cropModal") e.target.style.display = "none"; });
+document.getElementById("cropOk").addEventListener("click", ()=>{
+  const S = cropSize(), im = crop.img; if(!im || !S) return;
+  const f = 256 / S;
+  const cv = document.createElement("canvas"); cv.width = 256; cv.height = 256;
+  cv.getContext("2d").drawImage(im, crop.x * f, crop.y * f, im.naturalWidth * crop.base * crop.zoom * f, im.naturalHeight * crop.base * crop.zoom * f);
+  DB.settings.avatar = cv.toDataURL("image/jpeg", 0.85);
+  save(); renderAvatar();
+  document.getElementById("cropModal").style.display = "none";
+  dlgAlert("Foto profil diperbarui.");
 });
 
 /* ---------- Mode Kasir (peran terbatas, per perangkat) ---------- */
