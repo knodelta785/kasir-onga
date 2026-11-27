@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#2563eb">
 <script>
 /* Anti-cache: bila ada versi web lebih baru, muat ulang sekali ke versi itu */
-var APP_BUILD = "20261127-06";
+var APP_BUILD = "20261127-07";
 (function(){
   try{
     fetch("version.json?cb=" + Date.now(), {cache:"no-store"}).then(function(r){ return r.json(); }).then(function(v){
@@ -703,6 +703,7 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
       <button class="btn owner-only" id="catManageBtn">Kategori</button>
       <button class="btn primary owner-only" id="addProductBtn">+ Tambah</button>
     </div>
+    <input id="prodSearch" type="search" placeholder="🔍 Cari produk: nama / SKU / barcode…" style="margin-top:12px; width:100%">
     <div id="lowStockBox" style="margin-top:12px"></div>
     <div class="card" style="margin-top:12px; padding:0; overflow:hidden">
       <div id="productTable"></div>
@@ -1763,14 +1764,17 @@ document.getElementById("lowStockBox").addEventListener("click", e=>{
   const l = document.getElementById("lsList"); if(!l) return;
   l.style.display = l.style.display === "none" ? "" : "none";
 });
+document.getElementById("prodSearch").addEventListener("input", renderProduk);
 function renderProduk(){
+  const pq = (document.getElementById("prodSearch")?.value || "").trim().toLowerCase();
+  const matchP = p => !pq || p.name.toLowerCase().includes(pq) || (p.sku||"").toLowerCase().includes(pq) || (p.barcode||"").includes(pq);
   const low = DB.products.filter(p=>!p.noStock && p.stock <= DB.settings.lowStock).sort((a,b)=>a.stock-b.stock);
   document.getElementById("lowStockBox").innerHTML = low.length ?
     `<div class="card" style="border-color:#f59e0b">
       <button type="button" class="ls-head" id="lsToggle"><span>⚠️ Stok menipis (${low.length})</span><span class="chev">›</span></button>
       <div class="ls-list" id="lsList" style="display:none">${low.map(p=>`<div class="ls-row"><span>${esc(p.name)}</span><b class="${p.stock===0?"ls-zero":""}">${p.stock===0?"Habis":"Sisa "+p.stock}</b></div>`).join("")}</div>
     </div>` : "";
-  document.getElementById("productTable").innerHTML = DB.products.map(p=>`
+  document.getElementById("productTable").innerHTML = DB.products.filter(matchP).map(p=>`
     <div class="prodrow">
       ${p.img?`<img class="pthumb" src="${p.img}" alt="">`:`<div class="pthumb">${esc(p.emoji||"📦")}</div>`}
       <div class="pinfo">
@@ -1783,7 +1787,7 @@ function renderProduk(){
         <button class="btn sm" data-edit="${p.id}">Edit</button>
         <button class="btn sm red" data-delprod="${p.id}">Hapus</button>
       </div>
-    </div>`).join("") || `<div class="empty">Belum ada produk.</div>`;
+    </div>`).join("") || `<div class="empty">${pq ? "Produk tidak ditemukan." : "Belum ada produk."}</div>`;
 }
 function renderCatChips(){
   const cur = document.getElementById("pmCat").value.trim().toLowerCase();
