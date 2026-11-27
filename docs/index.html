@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#2563eb">
 <script>
 /* Anti-cache: bila ada versi web lebih baru, muat ulang sekali ke versi itu */
-var APP_BUILD = "20261127-07";
+var APP_BUILD = "20261127-10";
 (function(){
   try{
     fetch("version.json?cb=" + Date.now(), {cache:"no-store"}).then(function(r){ return r.json(); }).then(function(v){
@@ -158,7 +158,7 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .authgate .wrap{width:100%; max-width:400px}
 .authgate .brandmark{margin:0 auto 12px; display:flex; align-items:center; justify-content:center}
 .authgate .brandmark img{width:118px; height:118px; border-radius:28px; box-shadow:0 18px 36px rgba(2,6,23,.4)}
-header.topbar .brandlogo{width:44px; height:44px; flex:none; border-radius:14px; object-fit:cover; box-shadow:0 0 0 1px rgba(255,255,255,.35), 0 4px 10px rgba(2,6,23,.3)}
+header.topbar .brandlogo{width:44px; height:44px; flex:none; border-radius:14px; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.92), 0 4px 10px rgba(2,6,23,.35)}
 @font-face{font-family:'Plus Jakarta Sans'; src:url('fonts/pjs.woff2') format('woff2'); font-weight:700 800; font-display:swap}
 .brandwrap{flex:1; min-width:0}
 .brandeyebrow{font-family:'Plus Jakarta Sans',sans-serif; font-size:9.5px; font-weight:700; letter-spacing:2.4px; text-transform:uppercase; color:rgba(255,255,255,.72); line-height:1.1}
@@ -446,6 +446,7 @@ body[data-page="kasir"] .headsearch{display:flex}
 .cashchips{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:10px}
 .cashchips .chip{position:relative; border:1px solid var(--border); background:var(--surface2); color:var(--text); padding:14px 4px; min-height:52px; font-size:16px; font-weight:700; border-radius:14px; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; touch-action:manipulation}
 .cashchips .chip:active{background:var(--accent); color:#fff; border-color:var(--accent)}
+.cashchips .chip.on{background:var(--green); border-color:var(--green); color:#fff}
 .cashchips .cnt{position:absolute; top:-9px; right:-7px; background:var(--accent); color:#fff; font-size:13px; font-weight:800; line-height:1; padding:5px 9px; border-radius:999px; box-shadow:0 3px 8px rgba(15,23,42,.3); pointer-events:none; z-index:2}
 
 /* Mode Kasir: sembunyikan fitur superuser & data keuangan */
@@ -476,9 +477,9 @@ body[data-role="kasir"] .verifybar{display:none!important}
 .dlg .row{margin-top:18px}
 
 /* ============ REDESAIN GAYA KASIR PINTAR (Nov 2026) ============ */
-header.topbar{background:var(--surface); color:var(--text); box-shadow:0 1px 0 var(--border); background-image:none}
-.brandeyebrow{color:var(--muted)}
-#menuBtn{flex:none; width:44px; height:44px; border:none; background:var(--surface2); border-radius:12px; font-size:20px; cursor:pointer; color:var(--text)}
+header.topbar{background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 84%, #0a1030)); color:#fff; box-shadow:0 6px 20px color-mix(in srgb, var(--accent) 32%, transparent)}
+.brandeyebrow{color:rgba(255,255,255,.75)}
+#menuBtn{flex:none; width:44px; height:44px; border:none; background:rgba(255,255,255,.16); border-radius:12px; font-size:20px; cursor:pointer; color:#fff}
 .headsearch input{border-radius:999px}
 /* drawer menu samping */
 #drawerOverlay{position:fixed; inset:0; background:rgba(2,6,23,.45); z-index:64; opacity:0; pointer-events:none; transition:opacity .25s}
@@ -1487,6 +1488,7 @@ const prodById = id => DB.products.find(p=>p.id===id);
 
 /* ============================================================ KASIR */
 let cart = []; // {productId, qty}
+let cashPas = false; // status tombol "Uang Pas" sedang aktif (hijau)
 let payMethod = "Tunai";
 let activeCat = "terlaris";
 let lastTx = null;
@@ -1557,6 +1559,7 @@ function calcCart(){
   const nItems = cart.reduce((s,c)=>s+c.qty,0);
   document.getElementById("cartBar").classList.toggle("show", nItems>0 && document.body.dataset.page==="kasir");
   document.getElementById("cartBarInfo").textContent = nItems + " Item • " + rp(total);
+  if(cashPas && cash !== total){ cashPas = false; cashBadge(); }
   return {subtotal, disc, total};
 }
 document.getElementById("prodGrid").addEventListener("click", e=>{
@@ -1608,6 +1611,7 @@ function cashBadge(){
   document.querySelectorAll("#cashChips [data-cash]").forEach(b=>{
     const k = b.dataset.cash;
     const n = cashCounts[k] || 0;
+    b.classList.toggle("on", k === "pas" ? cashPas : n >= 1);
     let s = b.querySelector(".cnt");
     if(k !== "pas" && n >= 1){
       if(!s){ s = document.createElement("span"); s.className = "cnt"; b.appendChild(s); }
@@ -1615,12 +1619,13 @@ function cashBadge(){
     } else if(s){ s.remove(); }
   });
 }
-function cashResetCounts(){ cashCounts = {}; cashBadge(); }
+function cashResetCounts(){ cashCounts = {}; cashPas = false; cashBadge(); }
 document.getElementById("cashChips").addEventListener("click", e=>{
   if(chipSuppress){ chipSuppress = false; return; }
   const b = e.target.closest("[data-cash]"); if(!b) return;
-  if(b.dataset.cash === "pas"){ cashResetCounts(); cashSet(calcCart().total); }
+  if(b.dataset.cash === "pas"){ cashResetCounts(); cashSet(calcCart().total); cashPas = true; cashBadge(); }
   else{
+    cashPas = false;
     const v = parseInt(b.dataset.cash, 10);
     cashCounts[v] = (cashCounts[v] || 0) + 1;
     cashSet(cashVal() + v);
@@ -1630,6 +1635,7 @@ document.getElementById("cashChips").addEventListener("click", e=>{
 /* Tekan lama tombol nominal = kurangi 1x (perbaiki kelebihan tap); Reset = kosongkan */
 let chipTimer = null, chipSuppress = false;
 function chipMinus(b){
+  cashPas = false;
   const v = parseInt(b.dataset.cash, 10);
   if(cashCounts[v] > 0) cashCounts[v]--;
   cashSet(Math.max(0, cashVal() - v));
