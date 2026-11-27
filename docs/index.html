@@ -7,6 +7,20 @@
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
 <meta name="theme-color" content="#2563eb">
+<script>
+/* Anti-cache: bila ada versi web lebih baru, muat ulang sekali ke versi itu */
+var APP_BUILD = "20261127-05";
+(function(){
+  try{
+    fetch("version.json?cb=" + Date.now(), {cache:"no-store"}).then(function(r){ return r.json(); }).then(function(v){
+      if(v && v.webBuild && v.webBuild !== APP_BUILD && sessionStorage.getItem("ongaBuild") !== v.webBuild){
+        sessionStorage.setItem("ongaBuild", v.webBuild);
+        location.replace(location.pathname + "?v=" + encodeURIComponent(v.webBuild));
+      }
+    }).catch(function(){});
+  }catch(e){}
+})();
+</script>
 <style>
 :root{
   --accent:#2563eb; --accent-dark:#1e40af;
