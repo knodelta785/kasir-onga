@@ -91,6 +91,11 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .prod .pr{color:var(--accent); font-weight:800; font-size:14px; margin-top:2px}
 .prod .st{font-size:12px; color:var(--muted)}
 .prod .qty{position:absolute; top:8px; right:8px; background:var(--accent); color:#fff; min-width:24px; height:24px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; padding:0 6px}
+.ls-head{width:100%; background:none; border:none; font:inherit; font-weight:800; text-align:left; padding:2px 0; cursor:pointer; color:var(--text); display:flex; justify-content:space-between; align-items:center}
+.ls-list{margin-top:6px; max-height:264px; overflow-y:auto}
+.ls-row{display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-top:1px solid var(--border); font-size:13.5px}
+.ls-row b{white-space:nowrap}
+.ls-zero{color:#dc2626}
 .nostock-row{display:flex; align-items:center; gap:8px; margin-top:12px; font-weight:600; cursor:pointer}
 .nostock-row input{width:18px; height:18px; flex:0 0 auto; accent-color:var(--accent)}
 .catchips{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
@@ -1249,7 +1254,7 @@ function renderKasir(){
   const bySold = (a,b)=>(soldMap[b.id]||0)-(soldMap[a.id]||0);
   let list;
   if(activeCat === "terlaris"){
-    list = [...DB.products].sort(bySold).slice(0,10).filter(matchQ);
+    list = [...DB.products].sort(bySold).slice(0,60).filter(matchQ);
   } else {
     list = DB.products.filter(p => (activeCat==="all" || p.catId===activeCat) && matchQ(p)).sort(bySold);
   }
@@ -1453,10 +1458,18 @@ document.getElementById("waReceiptBtn").onclick = ()=>{
 };
 
 /* ============================================================ PRODUK */
+document.getElementById("lowStockBox").addEventListener("click", e=>{
+  if(!e.target.closest("#lsToggle")) return;
+  const l = document.getElementById("lsList"); if(!l) return;
+  l.style.display = l.style.display === "none" ? "" : "none";
+});
 function renderProduk(){
-  const low = DB.products.filter(p=>!p.noStock && p.stock <= DB.settings.lowStock);
+  const low = DB.products.filter(p=>!p.noStock && p.stock <= DB.settings.lowStock).sort((a,b)=>a.stock-b.stock);
   document.getElementById("lowStockBox").innerHTML = low.length ?
-    `<div class="card" style="border-color:#f59e0b"><b>⚠️ Stok menipis (${low.length}):</b> ${low.map(p=>`${esc(p.name)} (sisa ${p.stock})`).join(", ")}</div>` : "";
+    `<div class="card" style="border-color:#f59e0b">
+      <button type="button" class="ls-head" id="lsToggle"><span>⚠️ Stok menipis (${low.length})</span><span class="chev">›</span></button>
+      <div class="ls-list" id="lsList" style="display:none">${low.map(p=>`<div class="ls-row"><span>${esc(p.name)}</span><b class="${p.stock===0?"ls-zero":""}">${p.stock===0?"Habis":"Sisa "+p.stock}</b></div>`).join("")}</div>
+    </div>` : "";
   document.getElementById("productTable").innerHTML = DB.products.map(p=>`
     <tr>
       <td><b>${esc(p.emoji||"📦")} ${esc(p.name)}</b><div class="small muted">${esc(p.sku||"")}${p.barcode?` · ${esc(p.barcode)}`:""}</div></td>
