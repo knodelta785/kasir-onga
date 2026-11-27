@@ -73,7 +73,12 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .chips::-webkit-scrollbar{display:none}
 .chips button{flex:none; border:1px solid var(--border); background:var(--surface); color:var(--text); padding:8px 14px; border-radius:999px; font-size:14px}
 .chips button.active{background:var(--accent); color:#fff; border-color:var(--accent); font-weight:700}
-.prodgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(108px,1fr)); gap:10px; min-width:0}
+.prodgrid{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; min-width:0; padding-bottom:4px}
+.prodgrid::-webkit-scrollbar{display:none}
+.pgage{flex:0 0 100%; display:grid; grid-template-columns:repeat(3,1fr); gap:10px; scroll-snap-align:start; align-content:start; padding:2px}
+.pdots{display:flex; gap:5px; justify-content:center; padding:6px 0 2px}
+.pdots i{width:7px; height:7px; border-radius:99px; background:var(--border)}
+.pdots i.on{width:18px; background:var(--accent)}
 .prod{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 10px; text-align:left; box-shadow:var(--shadow); position:relative; width:100%; min-width:0; overflow:hidden}
 .prod:active{transform:scale(.97)}
 .prod .emoji{font-size:30px}
@@ -84,17 +89,6 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .catchips{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
 .catchips button{border:none; background:var(--accent-soft); color:var(--accent); border-radius:999px; padding:6px 13px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer}
 .catchips button.on{background:var(--accent); color:#fff}
-.rail-head{font-weight:800; font-size:15px; margin:0 0 8px}
-.rail{display:flex; gap:10px; overflow-x:auto; padding:2px 2px 12px; scrollbar-width:none; -webkit-overflow-scrolling:touch}
-.rail::-webkit-scrollbar{display:none}
-.rtile{flex:0 0 106px; background:var(--surface); border:none; border-radius:18px; padding:10px 8px; text-align:center; box-shadow:var(--shadow); cursor:pointer; position:relative; font:inherit; color:var(--text)}
-.rtile .emoji{font-size:30px; line-height:1.25}
-.rtile .nm{font-weight:600; font-size:12px; margin-top:4px; line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:30px}
-.rtile .pr{color:var(--accent); font-weight:800; font-size:12.5px; margin-top:2px}
-.rtile .qty{position:absolute; top:6px; right:6px; background:var(--accent); color:#fff; min-width:22px; height:22px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; padding:0 6px}
-.rtile.out{opacity:.45}
-.rtile.all{background:var(--accent-soft); color:var(--accent); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-weight:800; font-size:12.5px; box-shadow:none}
-.rtile.all .big{font-size:24px; line-height:1}
 .prod.out{opacity:.45}
 .cart-items{display:grid; gap:8px; max-height:320px; overflow:auto}
 .cart-item{display:flex; gap:8px; align-items:center; background:var(--surface2); border:1px solid var(--border); border-radius:11px; padding:8px 10px}
@@ -184,7 +178,7 @@ html[data-theme="dark"] .verifybar{background:#451a03; color:#fcd34d; border-bot
   header.topbar .brand{font-size:16px}
   nav.tabs{top:54px}
   nav.tabs button{padding:11px 9px; font-size:13.5px}
-  .prodgrid{grid-template-columns:repeat(3,1fr); gap:8px}
+  .pgage{gap:8px}
   .prod{padding:9px 7px; border-radius:12px}
   .prod .emoji{font-size:23px}
   .prod .nm{font-size:12.5px; min-height:31px; margin-top:4px}
@@ -485,12 +479,9 @@ body[data-role="kasir"] .verifybar{display:none!important}
   <section class="page active" id="page-kasir">
     <div class="kasir-layout">
       <div>
-        <div id="bestWrap" style="display:none">
-          <div class="rail-head">Terlaris</div>
-          <div class="rail" id="bestRail"></div>
-        </div>
         <div class="chips" id="catChips"></div>
         <div class="prodgrid" id="prodGrid"></div>
+        <div class="pdots" id="pageDots"></div>
       </div>
       <div class="card">
         <h2 style="margin-top:0">Keranjang</h2>
@@ -1211,38 +1202,28 @@ const prodById = id => DB.products.find(p=>p.id===id);
 /* ============================================================ KASIR */
 let cart = []; // {productId, qty}
 let payMethod = "Tunai";
-let activeCat = "all";
+let activeCat = "terlaris";
 let lastTx = null;
 
 function renderKasir(){
-  // chips kategori
-  const chips = [{id:"all", name:"Semua"}, ...DB.categories];
+  // chips kategori: Terlaris di kiri, Semua di kanan
+  const chips = [{id:"terlaris", name:"Terlaris"}, ...DB.categories, {id:"all", name:"Semua"}];
   document.getElementById("catChips").innerHTML = chips.map(c=>
     `<button class="${activeCat===c.id?"active":""}" data-cat="${c.id}">${esc(c.name)}</button>`).join("");
-  // rel produk terlaris (10 teratas menurut jumlah terjual)
+  const q = document.getElementById("searchInput").value.trim().toLowerCase();
+  const matchQ = p => !q || p.name.toLowerCase().includes(q) || (p.sku||"").toLowerCase().includes(q) || (p.barcode||"").includes(q);
   const soldMap = {};
   validTx().forEach(t=>t.items.forEach(it=>{ soldMap[it.productId]=(soldMap[it.productId]||0)+it.qty; }));
-  const top10 = [...DB.products].sort((a,b)=>(soldMap[b.id]||0)-(soldMap[a.id]||0)).slice(0,10);
-  const bw = document.getElementById("bestWrap"), railEl = document.getElementById("bestRail");
-  if(top10.length){
-    bw.style.display = "";
-    const sl = railEl.scrollLeft;
-    railEl.innerHTML = top10.map(p=>{
-      const inCart = cart.find(c=>c.productId===p.id);
-      return `<button class="rtile ${p.stock<=0?"out":""}" data-add="${p.id}">
-        ${inCart?`<span class="qty">${inCart.qty}</span>`:""}
-        <div class="emoji">${esc(p.emoji||"📦")}</div>
-        <div class="nm">${esc(p.name)}</div>
-        <div class="pr">${rp(p.price)}</div>
-      </button>`;
-    }).join("") + `<button class="rtile all" id="railAll"><span class="big">›</span>Tampilkan Semua</button>`;
-    railEl.scrollLeft = sl;
-  } else bw.style.display = "none";
-  const q = document.getElementById("searchInput").value.trim().toLowerCase();
-  const list = DB.products.filter(p =>
-    (activeCat==="all" || p.catId===activeCat) &&
-    (!q || p.name.toLowerCase().includes(q) || (p.sku||"").toLowerCase().includes(q) || (p.barcode||"").includes(q)));
-  document.getElementById("prodGrid").innerHTML = list.length ? list.map(p=>{
+  const bySold = (a,b)=>(soldMap[b.id]||0)-(soldMap[a.id]||0);
+  let list;
+  if(activeCat === "terlaris"){
+    list = [...DB.products].sort(bySold).slice(0,10).filter(matchQ);
+  } else {
+    list = DB.products.filter(p => (activeCat==="all" || p.catId===activeCat) && matchQ(p)).sort(bySold);
+  }
+  const grid = document.getElementById("prodGrid");
+  const prevPage = grid.clientWidth ? Math.round(grid.scrollLeft / grid.clientWidth) : 0;
+  const tile = p => {
     const inCart = cart.find(c=>c.productId===p.id);
     return `<button class="prod ${p.stock<=0?"out":""}" data-add="${p.id}">
       ${inCart?`<span class="qty">${inCart.qty}</span>`:""}
@@ -1251,7 +1232,16 @@ function renderKasir(){
       <div class="pr">${rp(p.price)}</div>
       <div class="st">Stok: ${p.stock} ${esc(p.unit||"")}</div>
     </button>`;
-  }).join("") : `<div class="empty" style="grid-column:1/-1">Produk tidak ditemukan.</div>`;
+  };
+  const pages = [];
+  for(let i=0;i<list.length;i+=6) pages.push(list.slice(i,i+6));
+  grid.innerHTML = pages.length
+    ? pages.map(pg=>`<div class="pgage">${pg.map(tile).join("")}</div>`).join("")
+    : `<div class="pgage"><div class="empty" style="grid-column:1/-1">Produk tidak ditemukan.</div></div>`;
+  const curPage = Math.min(prevPage, Math.max(0, pages.length-1));
+  grid.scrollLeft = curPage * grid.clientWidth;
+  document.getElementById("pageDots").innerHTML = pages.length > 1
+    ? pages.map((_,i)=>`<i class="${i===curPage?"on":""}"></i>`).join("") : "";
   // keranjang
   const box = document.getElementById("cartItems");
   box.innerHTML = cart.length ? cart.map(c=>{
@@ -1291,25 +1281,21 @@ document.getElementById("prodGrid").addEventListener("click", e=>{
   if(line){ if(line.qty < p.stock) line.qty++; } else cart.push({productId:p.id, qty:1});
   renderKasir();
 });
-document.getElementById("bestRail").addEventListener("click", e=>{
-  if(e.target.closest("#railAll")){
-    activeCat = "all";
-    document.getElementById("searchInput").value = "";
-    renderKasir();
-    document.getElementById("prodGrid").scrollIntoView({behavior:"smooth", block:"start"});
-    return;
-  }
-  const b = e.target.closest("[data-add]"); if(!b) return;
-  const p = prodById(b.dataset.add); if(!p || p.stock<=0) return;
-  const line = cart.find(c=>c.productId===p.id);
-  if(line){ if(line.qty < p.stock) line.qty++; } else cart.push({productId:p.id, qty:1});
-  renderKasir();
-});
+document.getElementById("prodGrid").addEventListener("scroll", ()=>{
+  const g = document.getElementById("prodGrid"); if(!g.clientWidth) return;
+  const cur = Math.round(g.scrollLeft / g.clientWidth);
+  document.querySelectorAll("#pageDots i").forEach((d,i)=>d.classList.toggle("on", i===cur));
+}, {passive:true});
 document.getElementById("catChips").addEventListener("click", e=>{
   const b = e.target.closest("[data-cat]"); if(!b) return;
-  activeCat = b.dataset.cat; renderKasir();
+  activeCat = b.dataset.cat;
+  document.getElementById("prodGrid").scrollLeft = 0;
+  renderKasir();
 });
-document.getElementById("searchInput").addEventListener("input", renderKasir);
+document.getElementById("searchInput").addEventListener("input", ()=>{
+  document.getElementById("prodGrid").scrollLeft = 0;
+  renderKasir();
+});
 document.getElementById("cartItems").addEventListener("click", e=>{
   const inc = e.target.closest("[data-inc]"), dec = e.target.closest("[data-dec]"), del = e.target.closest("[data-del]");
   const id = (inc||dec||del)?.dataset.inc || (inc||dec||del)?.dataset.dec || (inc||dec||del)?.dataset.del;
