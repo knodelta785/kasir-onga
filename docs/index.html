@@ -81,6 +81,17 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .prod .pr{color:var(--accent); font-weight:800; font-size:14px; margin-top:2px}
 .prod .st{font-size:12px; color:var(--muted)}
 .prod .qty{position:absolute; top:8px; right:8px; background:var(--accent); color:#fff; min-width:24px; height:24px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; padding:0 6px}
+.rail-head{font-weight:800; font-size:15px; margin:0 0 8px}
+.rail{display:flex; gap:10px; overflow-x:auto; padding:2px 2px 12px; scrollbar-width:none; -webkit-overflow-scrolling:touch}
+.rail::-webkit-scrollbar{display:none}
+.rtile{flex:0 0 106px; background:var(--surface); border:none; border-radius:18px; padding:10px 8px; text-align:center; box-shadow:var(--shadow); cursor:pointer; position:relative; font:inherit; color:var(--text)}
+.rtile .emoji{font-size:30px; line-height:1.25}
+.rtile .nm{font-weight:600; font-size:12px; margin-top:4px; line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:30px}
+.rtile .pr{color:var(--accent); font-weight:800; font-size:12.5px; margin-top:2px}
+.rtile .qty{position:absolute; top:6px; right:6px; background:var(--accent); color:#fff; min-width:22px; height:22px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; padding:0 6px}
+.rtile.out{opacity:.45}
+.rtile.all{background:var(--accent-soft); color:var(--accent); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-weight:800; font-size:12.5px; box-shadow:none}
+.rtile.all .big{font-size:24px; line-height:1}
 .prod.out{opacity:.45}
 .cart-items{display:grid; gap:8px; max-height:320px; overflow:auto}
 .cart-item{display:flex; gap:8px; align-items:center; background:var(--surface2); border:1px solid var(--border); border-radius:11px; padding:8px 10px}
@@ -383,7 +394,7 @@ body[data-page="kasir"] .headsearch{display:flex}
 }
 
 /* Avatar & menu akun */
-.avatarbtn{width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,.25); color:#fff; font-weight:800; font-size:16px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; flex:none; box-shadow:inset 0 0 0 1px rgba(255,255,255,.35); font-family:inherit}
+.avatarbtn{width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,.25); color:#fff; font-weight:800; font-size:20px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; flex:none; box-shadow:inset 0 0 0 1px rgba(255,255,255,.35); font-family:inherit}
 .avatarbtn img{width:100%; height:100%; object-fit:cover}
 .acct-head{display:flex; align-items:center; gap:13px; padding-bottom:14px}
 .avatarbig{width:56px; height:56px; border-radius:50%; background:var(--accent-soft); color:var(--accent); font-weight:800; font-size:22px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex:none}
@@ -471,6 +482,10 @@ body[data-role="kasir"] .verifybar{display:none!important}
   <section class="page active" id="page-kasir">
     <div class="kasir-layout">
       <div>
+        <div id="bestWrap" style="display:none">
+          <div class="rail-head">Terlaris</div>
+          <div class="rail" id="bestRail"></div>
+        </div>
         <div class="chips" id="catChips"></div>
         <div class="prodgrid" id="prodGrid"></div>
       </div>
@@ -527,6 +542,7 @@ body[data-role="kasir"] .verifybar{display:none!important}
   <section class="page" id="page-produk">
     <div class="row wrap">
       <h2 style="flex:1; margin:0">Produk &amp; Stok</h2>
+      <button class="btn owner-only" id="genAllBtn">Buat SKU & Barcode</button>
       <button class="btn owner-only" id="catManageBtn">Kategori</button>
       <button class="btn primary owner-only" id="addProductBtn">+ Tambah Produk</button>
     </div>
@@ -803,7 +819,9 @@ body[data-role="kasir"] .verifybar{display:none!important}
     <h2 id="pmTitle">Tambah Produk</h2>
     <input type="hidden" id="pmId">
     <label>Nama produk</label><input id="pmName">
-    <label>SKU / Barcode</label><input id="pmSku">
+    <label>SKU</label><input id="pmSku" placeholder="Otomatis bila kosong">
+    <label>Barcode</label><input id="pmBarcode" placeholder="Otomatis bila kosong" inputmode="numeric">
+    <div id="pmBarcodeView" style="margin-top:6px"></div>
     <label>Kategori</label><select id="pmCat"></select>
     <label>Ikon (emoji)</label><input id="pmEmoji" maxlength="4" placeholder="📦">
     <div class="row">
@@ -1105,7 +1123,7 @@ function applyTheme(){
   renderAvatar();
   document.documentElement.style.setProperty("--accent", DB.settings.accent);
   document.documentElement.style.setProperty("--accent-dark", DB.settings.accent);
-  document.getElementById("shopNameTop").textContent = DB.settings.shopName + " — Kasir Onga";
+  document.getElementById("shopNameTop").textContent = DB.settings.shopName;
 }
 function toggleTheme(){ DB.settings.theme = DB.settings.theme==="dark" ? "light" : "dark"; save(); applyTheme(); syncSettingsForm(); }
 
@@ -1202,10 +1220,29 @@ function renderKasir(){
   const chips = [{id:"all", name:"Semua"}, ...DB.categories];
   document.getElementById("catChips").innerHTML = chips.map(c=>
     `<button class="${activeCat===c.id?"active":""}" data-cat="${c.id}">${esc(c.name)}</button>`).join("");
+  // rel produk terlaris (10 teratas menurut jumlah terjual)
+  const soldMap = {};
+  validTx().forEach(t=>t.items.forEach(it=>{ soldMap[it.productId]=(soldMap[it.productId]||0)+it.qty; }));
+  const top10 = [...DB.products].sort((a,b)=>(soldMap[b.id]||0)-(soldMap[a.id]||0)).slice(0,10);
+  const bw = document.getElementById("bestWrap"), railEl = document.getElementById("bestRail");
+  if(top10.length){
+    bw.style.display = "";
+    const sl = railEl.scrollLeft;
+    railEl.innerHTML = top10.map(p=>{
+      const inCart = cart.find(c=>c.productId===p.id);
+      return `<button class="rtile ${p.stock<=0?"out":""}" data-add="${p.id}">
+        ${inCart?`<span class="qty">${inCart.qty}</span>`:""}
+        <div class="emoji">${esc(p.emoji||"📦")}</div>
+        <div class="nm">${esc(p.name)}</div>
+        <div class="pr">${rp(p.price)}</div>
+      </button>`;
+    }).join("") + `<button class="rtile all" id="railAll"><span class="big">›</span>Tampilkan Semua</button>`;
+    railEl.scrollLeft = sl;
+  } else bw.style.display = "none";
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
   const list = DB.products.filter(p =>
     (activeCat==="all" || p.catId===activeCat) &&
-    (!q || p.name.toLowerCase().includes(q) || (p.sku||"").toLowerCase().includes(q)));
+    (!q || p.name.toLowerCase().includes(q) || (p.sku||"").toLowerCase().includes(q) || (p.barcode||"").includes(q)));
   document.getElementById("prodGrid").innerHTML = list.length ? list.map(p=>{
     const inCart = cart.find(c=>c.productId===p.id);
     return `<button class="prod ${p.stock<=0?"out":""}" data-add="${p.id}">
@@ -1249,6 +1286,20 @@ function calcCart(){
   return {subtotal, disc, total};
 }
 document.getElementById("prodGrid").addEventListener("click", e=>{
+  const b = e.target.closest("[data-add]"); if(!b) return;
+  const p = prodById(b.dataset.add); if(!p || p.stock<=0) return;
+  const line = cart.find(c=>c.productId===p.id);
+  if(line){ if(line.qty < p.stock) line.qty++; } else cart.push({productId:p.id, qty:1});
+  renderKasir();
+});
+document.getElementById("bestRail").addEventListener("click", e=>{
+  if(e.target.closest("#railAll")){
+    activeCat = "all";
+    document.getElementById("searchInput").value = "";
+    renderKasir();
+    document.getElementById("prodGrid").scrollIntoView({behavior:"smooth", block:"start"});
+    return;
+  }
   const b = e.target.closest("[data-add]"); if(!b) return;
   const p = prodById(b.dataset.add); if(!p || p.stock<=0) return;
   const line = cart.find(c=>c.productId===p.id);
@@ -1391,7 +1442,7 @@ function renderProduk(){
     `<div class="card" style="border-color:#f59e0b"><b>⚠️ Stok menipis (${low.length}):</b> ${low.map(p=>`${esc(p.name)} (sisa ${p.stock})`).join(", ")}</div>` : "";
   document.getElementById("productTable").innerHTML = DB.products.map(p=>`
     <tr>
-      <td><b>${esc(p.emoji||"📦")} ${esc(p.name)}</b><div class="small muted">${esc(p.sku||"")}</div></td>
+      <td><b>${esc(p.emoji||"📦")} ${esc(p.name)}</b><div class="small muted">${esc(p.sku||"")}${p.barcode?` · ${esc(p.barcode)}`:""}</div></td>
       <td>${esc(catName(p.catId))}</td>
       <td class="num">${rp(p.price)}</td>
       <td class="num owner-only">${rp(p.cost)}</td>
@@ -1408,9 +1459,10 @@ function fillCatSelect(sel, val){
 }
 document.getElementById("addProductBtn").onclick = ()=>{
   document.getElementById("pmTitle").textContent = "Tambah Produk";
-  ["pmId","pmName","pmSku","pmPrice","pmCost","pmStock"].forEach(id=>document.getElementById(id).value="");
+  ["pmId","pmName","pmSku","pmBarcode","pmPrice","pmCost","pmStock"].forEach(id=>document.getElementById(id).value="");
   document.getElementById("pmEmoji").value = "📦"; document.getElementById("pmUnit").value = "pcs";
   fillCatSelect(document.getElementById("pmCat"), DB.categories[0]?.id);
+  renderBarcodePreview();
   openModal("productModal");
 };
 document.getElementById("productTable").addEventListener("click", e=>{
@@ -1419,10 +1471,11 @@ document.getElementById("productTable").addEventListener("click", e=>{
     const p = prodById(ed.dataset.edit); if(!p) return;
     document.getElementById("pmTitle").textContent = "Edit Produk";
     document.getElementById("pmId").value = p.id; document.getElementById("pmName").value = p.name;
-    document.getElementById("pmSku").value = p.sku||""; document.getElementById("pmPrice").value = p.price;
+    document.getElementById("pmSku").value = p.sku||""; document.getElementById("pmBarcode").value = p.barcode||""; document.getElementById("pmPrice").value = p.price;
     document.getElementById("pmCost").value = p.cost; document.getElementById("pmStock").value = p.stock;
     document.getElementById("pmEmoji").value = p.emoji||"📦"; document.getElementById("pmUnit").value = p.unit||"pcs";
     fillCatSelect(document.getElementById("pmCat"), p.catId);
+    renderBarcodePreview();
     openModal("productModal");
   }
   if(del){
@@ -1438,6 +1491,48 @@ document.getElementById("productTable").addEventListener("click", e=>{
     openModal("stockModal");
   }
 });
+/* ---------- SKU & barcode otomatis ---------- */
+function nextSeq(){ DB.settings.skuSeq = (DB.settings.skuSeq||0) + 1; return DB.settings.skuSeq; }
+function catCode(catId){ const c = DB.categories.find(x=>x.id===catId); const s = (c?c.name:"").toUpperCase().replace(/[^A-Z]/g,""); return (s.slice(0,3)||"PRD").padEnd(3,"X"); }
+function ean13(base12){ let sum = 0; for(let i=0;i<12;i++){ const d = +base12[i]; sum += (i%2===0) ? d : d*3; } return base12 + ((10-(sum%10))%10); }
+function genSku(catId, seq){ return catCode(catId) + "-" + String(seq).padStart(4,"0"); }
+function genBarcode(seq){ return ean13("200" + String(seq).padStart(9,"0")); }
+const EAN_L = ["0001101","0011001","0010011","0111101","0100011","0110001","0101111","0111011","0110111","0001011"];
+const EAN_G = ["0100111","0110011","0011011","0100001","0011101","0111001","0000101","0010001","0001001","0010111"];
+const EAN_R = ["1110010","1100110","1101100","1000010","1011100","1001110","1010000","1000100","1001000","1110100"];
+const EAN_PARITY = ["LLLLLL","LLGLGG","LLGGLG","LLGGGL","LGLLGG","LGGLLG","LGGGLL","LGLGLG","LGLGGL","LGGLGL"];
+function barcodeSvg(code){
+  if(!/^\d{13}$/.test(code||"")) return "";
+  const par = EAN_PARITY[+code[0]];
+  let bits = "101";
+  for(let i=1;i<=6;i++){ const d = +code[i]; bits += (par[i-1]==="L" ? EAN_L[d] : EAN_G[d]); }
+  bits += "01010";
+  for(let i=7;i<=12;i++) bits += EAN_R[+code[i]];
+  bits += "101";
+  let rects = "";
+  for(let i=0;i<bits.length;i++) if(bits[i]==="1") rects += `<rect x="${i}" y="0" width="1" height="44"/>`;
+  return `<svg viewBox="0 0 ${bits.length} 44" style="width:100%;max-width:220px;height:auto;display:block;margin:0 auto" fill="#000">${rects}</svg>`;
+}
+function renderBarcodePreview(){
+  const code = document.getElementById("pmBarcode").value.trim();
+  const box = document.getElementById("pmBarcodeView");
+  box.innerHTML = code ? `<div style="background:#fff;border-radius:12px;padding:10px 8px 6px">${barcodeSvg(code)}<div style="text-align:center;font-size:12px;letter-spacing:2px;color:#111">${esc(code)}</div></div>`
+    : `<div class="small muted">Barcode dibuat otomatis saat disimpan.</div>`;
+}
+document.getElementById("pmBarcode").addEventListener("input", renderBarcodePreview);
+document.getElementById("genAllBtn").onclick = ()=>{
+  let n = 0;
+  DB.products.forEach(p=>{
+    if(p.sku && p.barcode) return;
+    let seq = nextSeq(), guard = 0;
+    while(guard++ < 2000 && ((!p.sku && DB.products.some(x=>x!==p && x.sku===genSku(p.catId, seq))) || (!p.barcode && DB.products.some(x=>x!==p && x.barcode===genBarcode(seq))))) seq = nextSeq();
+    if(!p.sku) p.sku = genSku(p.catId, seq);
+    if(!p.barcode) p.barcode = genBarcode(seq);
+    n++;
+  });
+  if(n){ save(); renderAll(); }
+  dlgAlert(n ? `Selesai — ${n} produk diperbarui.` : "Semua produk sudah punya SKU & barcode.");
+};
 document.getElementById("pmSave").onclick = ()=>{
   const name = document.getElementById("pmName").value.trim();
   if(!name){ dlgAlert("Nama produk wajib diisi."); return; }
@@ -1446,6 +1541,14 @@ document.getElementById("pmSave").onclick = ()=>{
     emoji:document.getElementById("pmEmoji").value.trim()||"📦",
     price:parseFloat(document.getElementById("pmPrice").value)||0, cost:parseFloat(document.getElementById("pmCost").value)||0,
     stock:parseInt(document.getElementById("pmStock").value)||0, unit:document.getElementById("pmUnit").value.trim()||"pcs"};
+  let barcode = document.getElementById("pmBarcode").value.trim();
+  if(!data.sku || !barcode){
+    let seq = nextSeq(), guard = 0;
+    while(guard++ < 2000 && ((!data.sku && DB.products.some(p=>p.id!==id && p.sku===genSku(data.catId, seq))) || (!barcode && DB.products.some(p=>p.id!==id && p.barcode===genBarcode(seq))))) seq = nextSeq();
+    if(!data.sku) data.sku = genSku(data.catId, seq);
+    if(!barcode) barcode = genBarcode(seq);
+  }
+  data.barcode = barcode;
   if(id){ Object.assign(prodById(id), data); }
   else DB.products.push({id:uid(), ...data});
   save(); closeModals(); renderAll();
