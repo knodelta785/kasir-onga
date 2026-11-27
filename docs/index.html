@@ -91,6 +91,8 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .prod .pr{color:var(--accent); font-weight:800; font-size:14px; margin-top:2px}
 .prod .st{font-size:12px; color:var(--muted)}
 .prod .qty{position:absolute; top:8px; right:8px; background:var(--accent); color:#fff; min-width:24px; height:24px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; padding:0 6px}
+.nostock-row{display:flex; align-items:center; gap:8px; margin-top:12px; font-weight:600; cursor:pointer}
+.nostock-row input{width:18px; height:18px; flex:0 0 auto; accent-color:var(--accent)}
 .catchips{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
 .catchips button{border:none; background:var(--accent-soft); color:var(--accent); border-radius:999px; padding:6px 13px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer}
 .catchips button.on{background:var(--accent); color:#fff}
@@ -461,7 +463,7 @@ body[data-role="kasir"] .verifybar{display:none!important}
   </div>
   <div class="headsearch">
     <input id="searchInput" type="search" placeholder="🔍  Cari produk / SKU…">
-    <button id="holdListBtn">⏸ Ditahan (<span id="holdCount">0</span>)</button>
+    <button id="holdListBtn">⏸ Simpan Dulu (<span id="holdCount">0</span>)</button>
   </div>
 </header>
 <div class="verifybar" id="verifyBar" style="display:none">
@@ -529,7 +531,7 @@ body[data-role="kasir"] .verifybar{display:none!important}
         <div class="grid" style="margin-top:12px">
           <button class="btn primary block" id="payBtn" style="font-size:17px; padding:14px">BAYAR</button>
           <div class="row">
-            <button class="btn" id="holdBtn" style="flex:1">⏸ Tahan</button>
+            <button class="btn" id="holdBtn" style="flex:1">⏸ Simpan Dulu</button>
             <button class="btn" id="clearCartBtn" style="flex:1">🗑 Kosongkan</button>
           </div>
         </div>
@@ -542,6 +544,7 @@ body[data-role="kasir"] .verifybar{display:none!important}
     <div class="row wrap">
       <h2 style="flex:1; margin:0">Produk &amp; Stok</h2>
       <button class="btn owner-only" id="genAllBtn">Buat SKU & Barcode</button>
+      <button class="btn owner-only" id="importBtn">Impor Excel</button>
       <button class="btn owner-only" id="catManageBtn">Kategori</button>
       <button class="btn primary owner-only" id="addProductBtn">+ Tambah Produk</button>
     </div>
@@ -704,6 +707,18 @@ body[data-role="kasir"] .verifybar{display:none!important}
   </div>
 </div>
 
+<div class="modal" id="importModal">
+  <div class="sheet">
+    <h3 style="margin:0 0 6px">Impor Produk</h3>
+    <div id="importInfo" style="font-size:13.5px"></div>
+    <div id="importList" class="muted" style="margin-top:8px; font-size:13px; line-height:1.6"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost" id="importCancel">Batal</button>
+      <button class="btn primary" id="importGo" style="flex:1">Impor</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="importFile" accept=".xls,.xlsx,.csv" style="display:none">
 <div class="modal" id="cropModal" style="z-index:95">
   <div class="sheet">
     <h3 style="margin:0 0 10px">Sesuaikan Foto</h3>
@@ -843,6 +858,7 @@ body[data-role="kasir"] .verifybar{display:none!important}
       <div style="flex:1"><label>Stok</label><input id="pmStock" type="number" min="0"></div>
       <div style="flex:1"><label>Satuan</label><input id="pmUnit" placeholder="pcs"></div>
     </div>
+    <label class="nostock-row"><input type="checkbox" id="pmNoStock"> Tidak Pakai Stok</label>
     <div class="grid" style="margin-top:16px">
       <button class="btn primary block" id="pmSave">Simpan Produk</button>
       <button class="btn block" data-close>Batal</button>
@@ -884,10 +900,10 @@ body[data-role="kasir"] .verifybar{display:none!important}
   </div>
 </div>
 
-<!-- ================= MODAL PESANAN DITAHAN ================= -->
+<!-- ================= MODAL SIMPAN DULU ================= -->
 <div class="modal" id="holdModal">
   <div class="sheet">
-    <h2>Pesanan Ditahan</h2>
+    <h2>Pesanan Disimpan Dulu</h2>
     <div id="holdList" class="grid"></div>
     <button class="btn block" data-close style="margin-top:14px">Tutup</button>
   </div>
@@ -1241,12 +1257,12 @@ function renderKasir(){
   const prevPage = grid.clientWidth ? Math.round(grid.scrollLeft / grid.clientWidth) : 0;
   const tile = p => {
     const inCart = cart.find(c=>c.productId===p.id);
-    return `<button class="prod ${p.stock<=0?"out":""}" data-add="${p.id}">
+    return `<button class="prod ${p.stock<=0 && !p.noStock?"out":""}" data-add="${p.id}">
       ${inCart?`<span class="qty">${inCart.qty}</span>`:""}
       <div class="emoji">${esc(p.emoji||"📦")}</div>
       <div class="nm">${esc(p.name)}</div>
       <div class="pr">${rp(p.price)}</div>
-      <div class="st">Stok: ${p.stock} ${esc(p.unit||"")}</div>
+      <div class="st">${p.noStock ? "Tidak Pakai Stok" : `Stok: ${p.stock} ${esc(p.unit||"")}`}</div>
     </button>`;
   };
   const pages = [];
@@ -1292,9 +1308,9 @@ function calcCart(){
 }
 document.getElementById("prodGrid").addEventListener("click", e=>{
   const b = e.target.closest("[data-add]"); if(!b) return;
-  const p = prodById(b.dataset.add); if(!p || p.stock<=0) return;
+  const p = prodById(b.dataset.add); if(!p || (p.stock<=0 && !p.noStock)) return;
   const line = cart.find(c=>c.productId===p.id);
-  if(line){ if(line.qty < p.stock) line.qty++; } else cart.push({productId:p.id, qty:1});
+  if(line){ if(p.noStock || line.qty < p.stock) line.qty++; } else cart.push({productId:p.id, qty:1});
   renderKasir();
 });
 document.getElementById("prodGrid").addEventListener("scroll", ()=>{
@@ -1318,7 +1334,7 @@ document.getElementById("cartItems").addEventListener("click", e=>{
   if(!id) return;
   const line = cart.find(c=>c.productId===id); if(!line) return;
   const p = prodById(id);
-  if(inc && line.qty < (p?p.stock:0)) line.qty++;
+  if(inc && (p?.noStock || line.qty < (p?p.stock:0))) line.qty++;
   if(dec){ line.qty--; if(line.qty<=0) cart = cart.filter(c=>c.productId!==id); }
   if(del) cart = cart.filter(c=>c.productId!==id);
   renderKasir();
@@ -1366,7 +1382,7 @@ document.getElementById("holdBtn").onclick = ()=>{
   if(!cart.length){ dlgAlert("Keranjang masih kosong."); return; }
   DB.held.push({id:uid(), ts:Date.now(), cart:JSON.parse(JSON.stringify(cart)), discount:document.getElementById("discountInput").value, discountType:document.getElementById("discountType").value});
   save(); cart=[]; document.getElementById("discountInput").value=""; renderKasir();
-  dlgAlert("Pesanan ditahan.");
+  dlgAlert("Pesanan disimpan dulu.");
 };
 document.getElementById("holdListBtn").onclick = ()=>{
   const box = document.getElementById("holdList");
@@ -1375,7 +1391,7 @@ document.getElementById("holdListBtn").onclick = ()=>{
     return `<div class="card row"><div style="flex:1"><b>${new Date(h.ts).toLocaleString("id-ID")}</b><div class="small muted">${h.cart.length} jenis produk • ${rp(total)}</div></div>
     <button class="btn primary sm" data-resume="${h.id}">Lanjutkan</button>
     <button class="btn red sm" data-drop="${h.id}">Hapus</button></div>`;
-  }).join("") : `<div class="empty">Tidak ada pesanan ditahan.</div>`;
+  }).join("") : `<div class="empty">Tidak ada pesanan disimpan dulu.</div>`;
   openModal("holdModal");
 };
 document.getElementById("holdList").addEventListener("click", e=>{
@@ -1394,7 +1410,7 @@ document.getElementById("payBtn").onclick = ()=>{
   if(payMethod==="Tunai" && cash < total){ dlgAlert("Uang diterima kurang dari total."); return; }
   const items = cart.map(c=>{ const p=prodById(c.productId); return {productId:p.id, name:p.name, price:p.price, cost:p.cost, qty:c.qty}; });
   const tx = {id:uid(), ts:Date.now(), items, subtotal, discount:disc, total, pay:payMethod, cash, change:cash-total, voided:false};
-  items.forEach(it=>{ const p=prodById(it.productId); if(p) p.stock = Math.max(0, p.stock - it.qty); });
+  items.forEach(it=>{ const p=prodById(it.productId); if(p && !p.noStock) p.stock = Math.max(0, p.stock - it.qty); });
   DB.transactions.unshift(tx); lastTx = tx; save();
   cart=[]; document.getElementById("discountInput").value=""; document.getElementById("cashInput").value=""; cashResetCounts();
   renderKasir(); showReceipt(tx);
@@ -1438,7 +1454,7 @@ document.getElementById("waReceiptBtn").onclick = ()=>{
 
 /* ============================================================ PRODUK */
 function renderProduk(){
-  const low = DB.products.filter(p=>p.stock <= DB.settings.lowStock);
+  const low = DB.products.filter(p=>!p.noStock && p.stock <= DB.settings.lowStock);
   document.getElementById("lowStockBox").innerHTML = low.length ?
     `<div class="card" style="border-color:#f59e0b"><b>⚠️ Stok menipis (${low.length}):</b> ${low.map(p=>`${esc(p.name)} (sisa ${p.stock})`).join(", ")}</div>` : "";
   document.getElementById("productTable").innerHTML = DB.products.map(p=>`
@@ -1447,9 +1463,9 @@ function renderProduk(){
       <td>${esc(catName(p.catId))}</td>
       <td class="num">${rp(p.price)}</td>
       <td class="num owner-only">${rp(p.cost)}</td>
-      <td class="num">${p.stock<=DB.settings.lowStock?`<span class="badge warn">${p.stock}</span>`:p.stock} ${esc(p.unit||"")}</td>
+      <td class="num">${p.noStock?`<span class="badge">Tidak Pakai Stok</span>`:`${p.stock<=DB.settings.lowStock?`<span class="badge warn">${p.stock}</span>`:p.stock} ${esc(p.unit||"")}`}</td>
       <td class="owner-only" style="white-space:nowrap">
-        <button class="btn sm" data-stock="${p.id}">Stok</button>
+        ${p.noStock?"":`<button class="btn sm" data-stock="${p.id}">Stok</button>`}
         <button class="btn sm" data-edit="${p.id}">Edit</button>
         <button class="btn sm red" data-delprod="${p.id}">Hapus</button>
       </td>
@@ -1471,9 +1487,11 @@ document.getElementById("pmCatChips").addEventListener("click", e=>{
   renderCatChips();
 });
 document.getElementById("pmCat").addEventListener("input", renderCatChips);
+document.getElementById("pmNoStock").addEventListener("change", e=>{ document.getElementById("pmStock").disabled = e.target.checked; });
 document.getElementById("addProductBtn").onclick = ()=>{
   document.getElementById("pmTitle").textContent = "Tambah Produk";
   ["pmId","pmName","pmSku","pmBarcode","pmPrice","pmCost","pmStock"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("pmNoStock").checked = false; document.getElementById("pmStock").disabled = false;
   document.getElementById("pmEmoji").value = "📦"; document.getElementById("pmUnit").value = "pcs";
   fillCatSelect(document.getElementById("pmCat"), DB.categories[0]?.id);
   renderBarcodePreview();
@@ -1487,6 +1505,7 @@ document.getElementById("productTable").addEventListener("click", e=>{
     document.getElementById("pmId").value = p.id; document.getElementById("pmName").value = p.name;
     document.getElementById("pmSku").value = p.sku||""; document.getElementById("pmBarcode").value = p.barcode||""; document.getElementById("pmPrice").value = p.price;
     document.getElementById("pmCost").value = p.cost; document.getElementById("pmStock").value = p.stock;
+    document.getElementById("pmNoStock").checked = !!p.noStock; document.getElementById("pmStock").disabled = !!p.noStock;
     document.getElementById("pmEmoji").value = p.emoji||"📦"; document.getElementById("pmUnit").value = p.unit||"pcs";
     fillCatSelect(document.getElementById("pmCat"), p.catId);
     renderBarcodePreview();
@@ -1547,6 +1566,126 @@ document.getElementById("genAllBtn").onclick = ()=>{
   if(n){ save(); renderAll(); }
   dlgAlert(n ? `Selesai — ${n} produk diperbarui.` : "Semua produk sudah punya SKU & barcode.");
 };
+
+/* ---------- Impor produk dari Excel/CSV (ekspor Kasir Pintar, dll.) ---------- */
+let importData = null;
+function loadXLSX(){
+  return new Promise((res, rej)=>{
+    if(window.XLSX) return res();
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+function parseNum(v){
+  if(typeof v === "number") return isFinite(v) ? v : NaN;
+  if(v == null) return NaN;
+  let s = String(v).replace(/[^0-9.,-]/g, "");
+  if(!s) return NaN;
+  if(s.includes(".") && s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  else if(s.includes(",")) s = s.replace(",", ".");
+  else if(/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  const n = parseFloat(s);
+  return isFinite(n) ? n : NaN;
+}
+function mapColumns(headers){
+  const norm = headers.map(h=>String(h == null ? "" : h).toLowerCase());
+  const find = (keys, excl) => {
+    for(let i=0;i<norm.length;i++){
+      const h = norm[i];
+      if(excl && excl.some(x=>h.includes(x))) continue;
+      if(keys.some(k=>h.includes(k))) return i;
+    }
+    return -1;
+  };
+  let price = find(["jual"]);
+  if(price < 0) price = find(["harga"], ["beli", "modal"]);
+  return {
+    name: find(["nama"]),
+    code: find(["barcode", "kode", "sku"]),
+    price,
+    cost: find(["beli", "modal", "hpp"]),
+    stock: find(["stok", "stock"], ["min"]),
+    cat: find(["kategori"]),
+    unit: find(["satuan", "unit"]),
+    jasa: find(["jasa"]),
+  };
+}
+document.getElementById("importBtn").onclick = ()=>document.getElementById("importFile").click();
+document.getElementById("importFile").addEventListener("change", async e=>{
+  const f = e.target.files[0]; e.target.value = "";
+  if(!f) return;
+  try{ await loadXLSX(); }catch(err){ dlgAlert("Butuh internet untuk membaca file Excel."); return; }
+  let rows;
+  try{
+    const wb = XLSX.read(await f.arrayBuffer(), {type:"array"});
+    rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:""});
+  }catch(err){ dlgAlert("File tidak bisa dibaca."); return; }
+  if(!rows || rows.length < 2){ dlgAlert("File kosong."); return; }
+  const cols = mapColumns(rows[0]);
+  if(cols.name < 0 || cols.price < 0){ dlgAlert("Kolom nama / harga tidak ditemukan."); return; }
+  const seenName = new Set(DB.products.map(p=>p.name.toLowerCase()));
+  const seenCode = new Set(DB.products.map(p=>p.barcode).filter(Boolean));
+  const cand = []; let skipped = 0;
+  for(let i=1;i<rows.length;i++){
+    const r = rows[i];
+    const name = String(r[cols.name] == null ? "" : r[cols.name]).trim();
+    const price = parseNum(r[cols.price]);
+    if(!name || name.length > 90 || isNaN(price)) continue;
+    const priceRaw = r[cols.price];
+    if(typeof priceRaw === "string" && priceRaw.length > 20) continue;
+    const nameLow = name.toLowerCase();
+    if(nameLow.includes("tidak boleh kosong") || nameLow.includes("jangan ubah") || nameLow.includes("data kolom ini")) continue;
+    const code = cols.code >= 0 ? String(r[cols.code] == null ? "" : r[cols.code]).trim() : "";
+    if(seenName.has(name.toLowerCase()) || (code && seenCode.has(code))){ skipped++; continue; }
+    seenName.add(name.toLowerCase()); if(code) seenCode.add(code);
+    const jasa = cols.jasa >= 0 && String(r[cols.jasa]).trim() === "1";
+    let stock = cols.stock >= 0 ? parseNum(r[cols.stock]) : 0;
+    if(isNaN(stock) || stock < 0) stock = 0;
+    cand.push({
+      name, code, price: Math.round(price),
+      cost: cols.cost >= 0 ? (Math.round(parseNum(r[cols.cost])) || 0) : 0,
+      stock: Math.floor(stock), noStock: jasa,
+      catName: cols.cat >= 0 ? String(r[cols.cat] == null ? "" : r[cols.cat]).trim() : "",
+      unit: cols.unit >= 0 ? (String(r[cols.unit] == null ? "" : r[cols.unit]).trim() || "pcs") : "pcs",
+    });
+  }
+  if(!cand.length){ dlgAlert(skipped ? "Semua produk di file sudah ada." : "Tidak ada produk terbaca dari file."); return; }
+  importData = {cand, skipped};
+  document.getElementById("importInfo").innerHTML = `<b>${cand.length} produk</b> siap diimpor.` + (skipped ? ` ${skipped} sudah ada, dilewati.` : "");
+  document.getElementById("importList").innerHTML = cand.slice(0,5).map(c=>esc(c.name)).join("<br>") + (cand.length > 5 ? `<br>…dan ${cand.length - 5} lainnya` : "");
+  document.getElementById("importModal").style.display = "flex";
+});
+document.getElementById("importCancel").onclick = ()=>{ document.getElementById("importModal").style.display = "none"; importData = null; };
+document.getElementById("importGo").onclick = ()=>{
+  if(!importData) return;
+  const {cand, skipped} = importData;
+  const catCache = {};
+  const catIdFor = nm => {
+    nm = (nm || "").trim() || "Lainnya";
+    const k = nm.toLowerCase();
+    if(catCache[k]) return catCache[k];
+    let c = DB.categories.find(x=>x.name.toLowerCase() === k);
+    if(!c){ c = {id:uid(), name:nm}; DB.categories.push(c); }
+    catCache[k] = c.id; return c.id;
+  };
+  for(const c of cand){
+    const p = {id:uid(), name:c.name, sku:c.code || "", barcode:c.code || "", catId:catIdFor(c.catName),
+      price:c.price, cost:c.cost, stock:c.stock, unit:(c.unit || "pcs").slice(0,10), emoji:"📦", noStock:!!c.noStock};
+    if(!p.sku || !p.barcode){
+      const seq = nextSeq();
+      if(!p.sku) p.sku = genSku(p.catId, seq);
+      if(!p.barcode) p.barcode = genBarcode(seq);
+    }
+    DB.products.push(p);
+    if(p.stock > 0 && !p.noStock) DB.stockMoves.push({id:uid(), ts:Date.now(), productId:p.id, type:"in", qty:p.stock, note:"Saldo awal (impor)"});
+  }
+  importData = null;
+  document.getElementById("importModal").style.display = "none";
+  save(); renderAll();
+  dlgAlert(`Impor selesai: ${cand.length} produk masuk.` + (skipped ? ` ${skipped} dilewati.` : ""));
+};
 document.getElementById("pmSave").onclick = ()=>{
   const name = document.getElementById("pmName").value.trim();
   if(!name){ dlgAlert("Nama produk wajib diisi."); return; }
@@ -1557,7 +1696,8 @@ document.getElementById("pmSave").onclick = ()=>{
   const data = {name, sku:document.getElementById("pmSku").value.trim(), catId:cat.id,
     emoji:document.getElementById("pmEmoji").value.trim()||"📦",
     price:parseFloat(document.getElementById("pmPrice").value)||0, cost:parseFloat(document.getElementById("pmCost").value)||0,
-    stock:parseInt(document.getElementById("pmStock").value)||0, unit:document.getElementById("pmUnit").value.trim()||"pcs"};
+    stock:parseInt(document.getElementById("pmStock").value)||0, unit:document.getElementById("pmUnit").value.trim()||"pcs",
+    noStock:document.getElementById("pmNoStock").checked};
   let barcode = document.getElementById("pmBarcode").value.trim();
   if(!data.sku || !barcode){
     let seq = nextSeq(), guard = 0;
@@ -1617,7 +1757,7 @@ document.getElementById("txList").addEventListener("click", async e=>{
   const tx = DB.transactions.find(t=>t.id===v.dataset.void); if(!tx) return;
   if(!await dlgConfirm("Batalkan transaksi ini?", "Ya")) return;
   tx.voided = true;
-  tx.items.forEach(it=>{ const p=prodById(it.productId); if(p) p.stock += it.qty; });
+  tx.items.forEach(it=>{ const p=prodById(it.productId); if(p && !p.noStock) p.stock += it.qty; });
   save(); renderAll();
 });
 
@@ -1694,8 +1834,8 @@ function renderAnalisa(){
   document.getElementById("anaCat").innerHTML = catRows.length ? `<table>${catRows.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="num">${rp(v)}</td></tr>`).join("")}</table>` : "Belum ada data.";
   // stok menumpuk vs laris
   const soldQty = id => txs.reduce((s,t)=> s + t.items.filter(it=>it.productId===id).reduce((a,it)=>a+it.qty,0), 0);
-  const slow = DB.products.map(p=>({p, sold:soldQty(p.id)})).filter(x=>x.sold<=2 && x.p.stock>0).sort((a,b)=>b.p.stock-a.p.stock).slice(0,6);
-  const fast = DB.products.map(p=>({p, sold:soldQty(p.id)})).filter(x=>x.sold>0).sort((a,b)=> (a.p.stock/Math.max(a.sold,1)) - (b.p.stock/Math.max(b.sold,1))).slice(0,6);
+  const slow = DB.products.map(p=>({p, sold:soldQty(p.id)})).filter(x=>x.sold<=2 && x.p.stock>0 && !x.p.noStock).sort((a,b)=>b.p.stock-a.p.stock).slice(0,6);
+  const fast = DB.products.map(p=>({p, sold:soldQty(p.id)})).filter(x=>x.sold>0 && !x.p.noStock).sort((a,b)=> (a.p.stock/Math.max(a.sold,1)) - (b.p.stock/Math.max(b.sold,1))).slice(0,6);
   document.getElementById("anaSlow").innerHTML = slow.length ? `<table>${slow.map(x=>`<tr><td>${esc(x.p.name)}</td><td class="num">stok ${x.p.stock} • terjual ${x.sold}</td></tr>`).join("")}</table>` : "Tidak ada stok menumpuk.";
   document.getElementById("anaFast").innerHTML = fast.length ? `<table>${fast.map(x=>`<tr><td>${esc(x.p.name)}</td><td class="num">stok ${x.p.stock} • terjual ${x.sold}</td></tr>`).join("")}</table>` : "Belum ada data.";
 }
