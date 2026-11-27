@@ -81,6 +81,9 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .prod .pr{color:var(--accent); font-weight:800; font-size:14px; margin-top:2px}
 .prod .st{font-size:12px; color:var(--muted)}
 .prod .qty{position:absolute; top:8px; right:8px; background:var(--accent); color:#fff; min-width:24px; height:24px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; padding:0 6px}
+.catchips{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
+.catchips button{border:none; background:var(--accent-soft); color:var(--accent); border-radius:999px; padding:6px 13px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer}
+.catchips button.on{background:var(--accent); color:#fff}
 .rail-head{font-weight:800; font-size:15px; margin:0 0 8px}
 .rail{display:flex; gap:10px; overflow-x:auto; padding:2px 2px 12px; scrollbar-width:none; -webkit-overflow-scrolling:touch}
 .rail::-webkit-scrollbar{display:none}
@@ -822,7 +825,8 @@ body[data-role="kasir"] .verifybar{display:none!important}
     <label>SKU</label><input id="pmSku" placeholder="Otomatis bila kosong">
     <label>Barcode</label><input id="pmBarcode" placeholder="Otomatis bila kosong" inputmode="numeric">
     <div id="pmBarcodeView" style="margin-top:6px"></div>
-    <label>Kategori</label><input id="pmCat" list="pmCatList" placeholder="Pilih atau ketik kategori baru"><datalist id="pmCatList"></datalist>
+    <label>Kategori</label><input id="pmCat" placeholder="Pilih atau ketik kategori baru" autocomplete="off">
+    <div class="catchips" id="pmCatChips"></div>
     <label>Ikon (emoji)</label><input id="pmEmoji" maxlength="4" placeholder="📦">
     <div class="row">
       <div style="flex:1"><label>Harga jual (Rp)</label><input id="pmPrice" type="number" min="0"></div>
@@ -1449,11 +1453,22 @@ function renderProduk(){
       </td>
     </tr>`).join("") || `<tr><td colspan="6" class="empty">Belum ada produk.</td></tr>`;
 }
+function renderCatChips(){
+  const cur = document.getElementById("pmCat").value.trim().toLowerCase();
+  document.getElementById("pmCatChips").innerHTML = DB.categories.map(c=>
+    `<button type="button" data-catname="${esc(c.name)}" class="${cur===c.name.toLowerCase()?"on":""}">${esc(c.name)}</button>`).join("");
+}
 function fillCatSelect(sel, val){
-  document.getElementById("pmCatList").innerHTML = DB.categories.map(c=>`<option value="${esc(c.name)}">`).join("");
   const c = DB.categories.find(x=>x.id===val);
   sel.value = c ? c.name : "";
+  renderCatChips();
 }
+document.getElementById("pmCatChips").addEventListener("click", e=>{
+  const b = e.target.closest("[data-catname]"); if(!b) return;
+  document.getElementById("pmCat").value = b.dataset.catname;
+  renderCatChips();
+});
+document.getElementById("pmCat").addEventListener("input", renderCatChips);
 document.getElementById("addProductBtn").onclick = ()=>{
   document.getElementById("pmTitle").textContent = "Tambah Produk";
   ["pmId","pmName","pmSku","pmBarcode","pmPrice","pmCost","pmStock"].forEach(id=>document.getElementById(id).value="");
