@@ -449,6 +449,7 @@ body[data-role="kasir"] .home-tile[data-goto="pelanggan"],
 body[data-role="kasir"] .home-tile[data-goto="piutang"],
 body[data-role="kasir"] .home-tile[data-goto="pengaturan"]{display:none}
 body[data-role="kasir"] .owner-only{display:none!important}
+body[data-role="kasir"] #drawerCats{display:none}
 body[data-role="kasir"] .verifybar{display:none!important}
 
 /* Ukuran tombol konsisten: teks tidak membungkus, tinggi seragam */
@@ -762,6 +763,13 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
       <label>Alamat</label><input id="setShopAddr">
       <label>Nomor WhatsApp</label><input id="setShopWa">
       <label>Teks penutup struk</label><input id="setReceiptFooter">
+      <label>Logo toko (tampil di struk)</label>
+      <div class="row" style="align-items:center">
+        <img id="setLogoPreview" alt="" style="width:56px; height:56px; object-fit:cover; border-radius:12px; border:1px solid var(--border); display:none">
+        <button class="btn" id="setLogoBtn" type="button" style="flex:1">Tambah Logo</button>
+        <button class="btn red" id="setLogoDel" type="button" style="display:none; flex:1">Hapus Logo</button>
+      </div>
+      <input type="file" id="setLogoFile" accept="image/*" style="display:none">
       <label>Warna aksen</label>
       <select id="setAccent">
         <option value="#2563eb">Biru</option>
@@ -846,7 +854,7 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
   </div>
 </div>
 
-<div class="modal" id="pwModal">
+<div class="modal" id="pwModal" style="z-index:96">
   <div class="sheet">
     <h3 id="pwTitle" style="margin-top:0">Konfirmasi Password</h3>
     <p class="small muted" style="margin-top:0">Ketik password akunmu dua kali.</p>
@@ -926,7 +934,7 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
   </div>
 </div>
 
-<div class="modal" id="dlgModal">
+<div class="modal" id="dlgModal" style="z-index:97">
   <div class="sheet dlg">
     <p id="dlgMsg"></p>
     <div class="row">
@@ -1373,7 +1381,7 @@ function closeDrawer(){ const t = document.getElementById("tabs"); if(t) t.class
 document.getElementById("menuBtn").addEventListener("click", openDrawer);
 document.getElementById("drawerOverlay").addEventListener("click", closeDrawer);
 document.getElementById("drawerHold").addEventListener("click", ()=>{ gotoPage("kasir"); document.getElementById("holdListBtn").click(); });
-document.getElementById("drawerCats").addEventListener("click", ()=>{ gotoPage("produk"); document.getElementById("catManageBtn").click(); });
+document.getElementById("drawerCats").addEventListener("click", ()=>{ if(roleMode==="kasir") return; gotoPage("produk"); document.getElementById("catManageBtn").click(); });
 document.getElementById("drawerAccount").addEventListener("click", ()=>{ closeDrawer(); document.getElementById("avatarBtn").click(); });
 document.getElementById("homeStart").addEventListener("click", ()=>gotoPage("kasir"));
 document.querySelectorAll(".home-tile").forEach(t=>t.addEventListener("click", ()=>{
@@ -1428,7 +1436,14 @@ function askPassword(title, okText){
     setTimeout(()=>{ const i = document.getElementById("pw1"); if(i) i.focus(); }, 250);
   });
 }
-function pwDone(v){ closeModals(); if(pwResolve){ const r = pwResolve; pwResolve = null; r(v); } }
+function pwDone(v){ document.getElementById("pwModal").classList.remove("open"); if(pwResolve){ const r = pwResolve; pwResolve = null; r(v); } }
+/* Gerbang password owner untuk aksi krusial (hapus kategori/produk):
+   wajib verifikasi password akun. Mode lokal tanpa akun -> konfirmasi biasa. */
+async function ownerGate(title){
+  if(!currentUser) return dlgConfirm(title, "Hapus");
+  const pw = await askPassword(title, "Verifikasi");
+  return !!pw;
+}
 document.getElementById("pwCancel").addEventListener("click", ()=>pwDone(null));
 document.getElementById("pwModal").addEventListener("click", e=>{ if(e.target.id==="pwModal") pwDone(null); });
 document.getElementById("pwOk").addEventListener("click", async ()=>{
@@ -1711,6 +1726,7 @@ function receiptText(tx){
 function showReceipt(tx){
   const s = DB.settings;
   document.getElementById("receiptBox").innerHTML = `
+    ${s.logo?`<div class="c"><img src="${s.logo}" alt="" style="width:110px; height:110px; object-fit:cover; border-radius:12px"></div>`:""}
     <h3>${esc(s.shopName)}</h3>
     <div class="c">${esc(s.shopAddr)}<br>WA: ${esc(s.shopWa)}</div>
     <hr><div class="c">${new Date(tx.ts).toLocaleString("id-ID")}</div><hr>
@@ -1840,7 +1856,7 @@ document.getElementById("productTable").addEventListener("click", e=>{
   }
   if(del){
     const p = prodById(del.dataset.delprod);
-    if(p){ dlgConfirm(`Hapus produk "${p.name}"?`, "Hapus").then(ok=>{ if(ok){ DB.products = DB.products.filter(x=>x.id!==p.id); save(); renderAll(); } }); }
+    if(p){ ownerGate(`Hapus produk "${p.name}"?`).then(ok=>{ if(ok){ DB.products = DB.products.filter(x=>x.id!==p.id); save(); renderAll(); } }); }
   }
   if(st){
     const p = prodById(st.dataset.stock); if(!p) return;
@@ -2058,9 +2074,13 @@ document.getElementById("addCatBtn").onclick = ()=>{
 };
 document.getElementById("catList").addEventListener("click", e=>{
   const d = e.target.closest("[data-delcat]"); if(!d) return;
-  if(DB.products.some(p=>p.catId===d.dataset.delcat)){ dlgAlert("Kategori masih dipakai produk."); return; }
-  DB.categories = DB.categories.filter(c=>c.id!==d.dataset.delcat); save();
-  document.getElementById("catManageBtn").click(); renderAll();
+  const c = DB.categories.find(x=>x.id===d.dataset.delcat); if(!c) return;
+  if(DB.products.some(p=>p.catId===c.id)){ dlgAlert("Kategori masih dipakai produk."); return; }
+  ownerGate(`Hapus kategori "${c.name}"?`).then(ok=>{
+    if(!ok) return;
+    DB.categories = DB.categories.filter(x=>x.id!==c.id); save();
+    document.getElementById("catManageBtn").click(); renderAll();
+  });
 });
 
 /* ============================================================ RIWAYAT */
@@ -2315,6 +2335,7 @@ function syncSettingsForm(){
   document.getElementById("setReceiptFooter").value = s.receiptFooter;
   document.getElementById("setAccent").value = s.accent;
   document.getElementById("setLowStock").value = s.lowStock;
+  logoSync();
 }
 document.getElementById("saveSettings").onclick = ()=>{
   const s = DB.settings;
@@ -2327,6 +2348,24 @@ document.getElementById("saveSettings").onclick = ()=>{
   save(); applyTheme(); dlgAlert("Pengaturan tersimpan.");
 };
 document.getElementById("themeToggle2").onclick = toggleTheme;
+/* ----- logo toko: tampil di struk ----- */
+function logoSync(){
+  const has = !!DB.settings.logo;
+  const img = document.getElementById("setLogoPreview"), del = document.getElementById("setLogoDel"), btn = document.getElementById("setLogoBtn");
+  if(has){ img.src = DB.settings.logo; img.style.display = "block"; } else { img.removeAttribute("src"); img.style.display = "none"; }
+  del.style.display = has ? "" : "none";
+  btn.textContent = has ? "Ganti Logo" : "Tambah Logo";
+}
+document.getElementById("setLogoBtn").addEventListener("click", ()=>document.getElementById("setLogoFile").click());
+document.getElementById("setLogoFile").addEventListener("change", e=>{
+  const f = e.target.files[0]; e.target.value = "";
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{ cropTarget = "logo"; openCrop(rd.result); };
+  rd.onerror = ()=>dlgAlert("Foto tidak bisa dibaca.");
+  rd.readAsDataURL(f);
+});
+document.getElementById("setLogoDel").addEventListener("click", ()=>{ DB.settings.logo = ""; save(); logoSync(); });
 document.getElementById("resetAll").onclick = async ()=>{
   if(currentUser){ if(!await askPassword("Mulai dari Nol", "Hapus Semua")) return; }
   else {
@@ -2447,8 +2486,15 @@ document.getElementById("cropOk").addEventListener("click", ()=>{
   const S = cropSize(), im = crop.img; if(!im || !S) return;
   const f = 256 / S;
   const cv = document.createElement("canvas"); cv.width = 256; cv.height = 256;
-  cv.getContext("2d").drawImage(im, crop.x * f, crop.y * f, im.naturalWidth * crop.base * crop.zoom * f, im.naturalHeight * crop.base * crop.zoom * f);
+  const cx2 = cv.getContext("2d");
+  if(cropTarget === "logo"){ cx2.fillStyle = "#ffffff"; cx2.fillRect(0, 0, 256, 256); }
+  cx2.drawImage(im, crop.x * f, crop.y * f, im.naturalWidth * crop.base * crop.zoom * f, im.naturalHeight * crop.base * crop.zoom * f);
   document.getElementById("cropModal").style.display = "none";
+  if(cropTarget === "logo"){
+    DB.settings.logo = compressCanvas(cv, 12000);
+    save(); logoSync();
+    return;
+  }
   if(cropTarget === "product"){
     pmPhotoData = compressCanvas(cv, 9000);
     pmPhotoSync();
