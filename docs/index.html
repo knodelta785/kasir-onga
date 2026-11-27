@@ -1603,7 +1603,7 @@ function cashBadge(){
     const k = b.dataset.cash;
     const n = cashCounts[k] || 0;
     let s = b.querySelector(".cnt");
-    if(k !== "pas" && n >= 2){
+    if(k !== "pas" && n >= 1){
       if(!s){ s = document.createElement("span"); s.className = "cnt"; b.appendChild(s); }
       s.textContent = "×" + n;
     } else if(s){ s.remove(); }
