@@ -430,9 +430,9 @@ body[data-page="kasir"] .headsearch{display:flex}
 
 /* Tombol nominal cepat uang diterima: besar, mudah di-tap, ada lencana jumlah tap */
 .cashchips{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:10px}
-.cashchips .chip{position:relative; border:1px solid var(--border); background:var(--surface2); color:var(--text); padding:14px 4px; min-height:52px; font-size:16px; font-weight:700; border-radius:14px; cursor:pointer}
+.cashchips .chip{position:relative; border:1px solid var(--border); background:var(--surface2); color:var(--text); padding:14px 4px; min-height:52px; font-size:16px; font-weight:700; border-radius:14px; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; touch-action:manipulation}
 .cashchips .chip:active{background:var(--accent); color:#fff; border-color:var(--accent)}
-.cashchips .cnt{position:absolute; top:-8px; right:-6px; background:var(--accent); color:#fff; font-size:11px; font-weight:800; line-height:1; padding:4px 7px; border-radius:999px; box-shadow:0 3px 8px rgba(15,23,42,.3); pointer-events:none}
+.cashchips .cnt{position:absolute; top:-9px; right:-7px; background:var(--accent); color:#fff; font-size:13px; font-weight:800; line-height:1; padding:5px 9px; border-radius:999px; box-shadow:0 3px 8px rgba(15,23,42,.3); pointer-events:none; z-index:2}
 
 /* Mode Kasir: sembunyikan fitur superuser & data keuangan */
 body[data-role="kasir"] nav.tabs button[data-page="beranda"],
@@ -651,7 +651,7 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
           <div class="totrow" style="margin-top:6px"><span>Sisa piutang</span><b id="ctDebt">Rp0</b></div>
         </div>
         <div id="cashBox">
-          <label>Uang diterima</label>
+          <div style="display:flex; align-items:center; justify-content:space-between"><label style="margin:0">Uang diterima</label><button type="button" id="cashReset" style="border:none; background:none; color:var(--accent); font-weight:700; font-size:13px; cursor:pointer; padding:2px 4px">↺ Reset</button></div>
           <input id="cashInput" type="text" inputmode="numeric" autocomplete="off" placeholder="0">
           <div class="cashchips" id="cashChips">
             <button type="button" class="chip" data-cash="pas">Uang Pas</button>
@@ -664,6 +664,7 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
             <button type="button" class="chip" data-cash="1000">1.000</button>
             <button type="button" class="chip" data-cash="500">500</button>
           </div>
+          <div style="font-size:11px; color:var(--muted); margin-top:6px">Tekan lama tombol nominal untuk mengurangi.</div>
           <div class="totrow" style="margin-top:6px"><span>Kembalian</span><b id="ctChange">Rp0</b></div>
         </div>
         <div class="grid" style="margin-top:12px">
@@ -1578,8 +1579,9 @@ function cashSet(n){ document.getElementById("cashInput").value = n ? Number(n).
 document.getElementById("cashInput").addEventListener("input", e=>{
   const raw = e.target.value.replace(/[^\d]/g,"");
   e.target.value = raw ? Number(raw).toLocaleString("id-ID") : "";
-  cashResetCounts();
+  if(cashVal() !== cashChipSum()) cashResetCounts();
 });
+function cashChipSum(){ return Object.entries(cashCounts).reduce((s,[k,n])=>s + (parseInt(k,10)||0)*n, 0); }
 let cashCounts = {};
 function cashBadge(){
   document.querySelectorAll("#cashChips [data-cash]").forEach(b=>{
@@ -1594,6 +1596,7 @@ function cashBadge(){
 }
 function cashResetCounts(){ cashCounts = {}; cashBadge(); }
 document.getElementById("cashChips").addEventListener("click", e=>{
+  if(chipSuppress){ chipSuppress = false; return; }
   const b = e.target.closest("[data-cash]"); if(!b) return;
   if(b.dataset.cash === "pas"){ cashResetCounts(); cashSet(calcCart().total); }
   else{
@@ -1603,6 +1606,22 @@ document.getElementById("cashChips").addEventListener("click", e=>{
     cashBadge();
   }
 });
+/* Tekan lama tombol nominal = kurangi 1x (perbaiki kelebihan tap); Reset = kosongkan */
+let chipTimer = null, chipSuppress = false;
+function chipMinus(b){
+  const v = parseInt(b.dataset.cash, 10);
+  if(cashCounts[v] > 0) cashCounts[v]--;
+  cashSet(Math.max(0, cashVal() - v));
+  cashBadge();
+}
+const cashChipsEl = document.getElementById("cashChips");
+cashChipsEl.addEventListener("pointerdown", e=>{
+  const b = e.target.closest("[data-cash]"); if(!b || b.dataset.cash === "pas") return;
+  chipTimer = setTimeout(()=>{ chipSuppress = true; chipMinus(b); }, 500);
+});
+["pointerup","pointerleave","pointercancel"].forEach(ev=>cashChipsEl.addEventListener(ev, ()=>{ if(chipTimer){ clearTimeout(chipTimer); chipTimer = null; } }));
+cashChipsEl.addEventListener("contextmenu", e=>e.preventDefault());
+document.getElementById("cashReset").addEventListener("click", ()=>{ cashResetCounts(); cashSet(0); });
 document.getElementById("payMethods").addEventListener("click", e=>{
   const b = e.target.closest("[data-pay]"); if(!b) return;
   payMethod = b.dataset.pay;
@@ -1762,39 +1781,36 @@ document.getElementById("pmCatChips").addEventListener("click", e=>{
 });
 document.getElementById("pmCat").addEventListener("input", renderCatChips);
 document.getElementById("pmNoStock").addEventListener("change", e=>{ document.getElementById("pmStock").disabled = e.target.checked; });
-/* ----- foto produk: kompres adaptif sampai sangat kecil (± di bawah 8 KB) ----- */
+/* ----- foto produk: crop dulu, lalu kompres sekecil mungkin tapi tetap jelas ----- */
 let pmPhotoData = "";
 function pmPhotoSync(){
   const img = document.getElementById("pmPhotoPreview"), del = document.getElementById("pmPhotoDel");
   if(pmPhotoData){ img.src = pmPhotoData; img.style.display = "block"; del.style.display = ""; }
   else { img.removeAttribute("src"); img.style.display = "none"; del.style.display = "none"; }
 }
-function compressPhoto(file){
-  return new Promise((res, rej)=>{
-    const url = URL.createObjectURL(file), im = new Image();
-    im.onload = ()=>{
-      URL.revokeObjectURL(url);
-      const side = Math.min(im.naturalWidth, im.naturalHeight);
-      const sx = (im.naturalWidth - side)/2, sy = (im.naturalHeight - side)/2;
-      let size = 256, q = 0.82, out = "";
-      do{
-        const c = document.createElement("canvas"); c.width = size; c.height = size;
-        c.getContext("2d").drawImage(im, sx, sy, side, side, 0, 0, size, size);
-        out = c.toDataURL("image/jpeg", q);
-        if(out.length <= 11000) break;
-        if(q > 0.55) q -= 0.13; else size = Math.round(size * 0.72);
-      }while(size >= 72);
-      res(out);
-    };
-    im.onerror = rej; im.src = url;
-  });
+/* Kompres canvas persegi: coba ukuran & kualitas terbesar yang muat di maxChars.
+   Hasil ± di bawah 7 KB; ukuran akhir 112–224px (tampil ±52px di daftar, jadi tetap jelas). */
+function compressCanvas(src, maxChars){
+  const sizes = [224, 192, 160, 144, 128, 112];
+  let out = "";
+  for(const size of sizes){
+    const c = document.createElement("canvas"); c.width = size; c.height = size;
+    c.getContext("2d").drawImage(src, 0, 0, size, size);
+    for(let q = 0.78; q >= 0.42; q -= 0.09){
+      out = c.toDataURL("image/jpeg", q);
+      if(out.length <= maxChars) return out;
+    }
+  }
+  return out;
 }
 document.getElementById("pmPhotoBtn").addEventListener("click", ()=>document.getElementById("pmPhotoFile").click());
-document.getElementById("pmPhotoFile").addEventListener("change", async e=>{
+document.getElementById("pmPhotoFile").addEventListener("change", e=>{
   const f = e.target.files[0]; e.target.value = "";
   if(!f) return;
-  try{ pmPhotoData = await compressPhoto(f); pmPhotoSync(); }
-  catch(err){ dlgAlert("Foto tidak bisa dibaca."); }
+  const rd = new FileReader();
+  rd.onload = ()=>{ cropTarget = "product"; openCrop(rd.result); };
+  rd.onerror = ()=>dlgAlert("Foto tidak bisa dibaca.");
+  rd.readAsDataURL(f);
 });
 document.getElementById("pmPhotoDel").addEventListener("click", ()=>{ pmPhotoData = ""; pmPhotoSync(); });
 document.getElementById("addProductBtn").onclick = ()=>{
@@ -2378,12 +2394,13 @@ document.getElementById("amAvatarDel").addEventListener("click", ()=>{ DB.settin
 document.getElementById("avatarFile").addEventListener("change", e=>{
   const f = e.target.files[0]; if(!f) return;
   const rd = new FileReader();
-  rd.onload = ()=>openCrop(rd.result);
+  rd.onload = ()=>{ cropTarget = "avatar"; openCrop(rd.result); };
   rd.readAsDataURL(f);
   e.target.value = "";
 });
 
-/* ---------- Crop foto profil ---------- */
+/* ---------- Crop foto (profil & produk) ---------- */
+let cropTarget = "avatar";
 const crop = {img:null, base:0, zoom:1, x:0, y:0, drag:null};
 function cropSize(){ return document.getElementById("cropStage").clientWidth; }
 function cropLayout(){
@@ -2431,9 +2448,14 @@ document.getElementById("cropOk").addEventListener("click", ()=>{
   const f = 256 / S;
   const cv = document.createElement("canvas"); cv.width = 256; cv.height = 256;
   cv.getContext("2d").drawImage(im, crop.x * f, crop.y * f, im.naturalWidth * crop.base * crop.zoom * f, im.naturalHeight * crop.base * crop.zoom * f);
+  document.getElementById("cropModal").style.display = "none";
+  if(cropTarget === "product"){
+    pmPhotoData = compressCanvas(cv, 9000);
+    pmPhotoSync();
+    return;
+  }
   DB.settings.avatar = cv.toDataURL("image/jpeg", 0.85);
   save(); renderAvatar();
-  document.getElementById("cropModal").style.display = "none";
   dlgAlert("Foto profil diperbarui.");
 });
 
