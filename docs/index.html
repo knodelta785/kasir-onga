@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#2563eb">
 <script>
 /* Anti-cache: bila ada versi web lebih baru, muat ulang sekali ke versi itu */
-var APP_BUILD = "20261127-05";
+var APP_BUILD = "20261127-06";
 (function(){
   try{
     fetch("version.json?cb=" + Date.now(), {cache:"no-store"}).then(function(r){ return r.json(); }).then(function(v){
@@ -83,7 +83,7 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .kasir-layout{display:grid; grid-template-columns:minmax(0,1fr); gap:14px}
 .kasir-layout > *{min-width:0}
 @media(min-width:900px){ .kasir-layout{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)} }
-.chips{display:flex; gap:8px; overflow-x:auto; padding:2px 0 10px; scrollbar-width:none; max-width:100%; min-width:0}
+.chips{display:flex; flex-wrap:wrap; gap:8px; padding:2px 0 10px; max-width:100%; min-width:0}
 .chips::-webkit-scrollbar{display:none}
 .chips button{flex:none; border:1px solid var(--border); background:var(--surface); color:var(--text); padding:8px 14px; border-radius:999px; font-size:14px}
 .chips button.active{background:var(--accent); color:#fff; border-color:var(--accent); font-weight:700}
@@ -546,8 +546,7 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
 .photorow{display:flex; align-items:center; gap:12px; margin-top:12px}
 #pmPhotoPreview{width:64px; height:64px; border-radius:12px; object-fit:cover; background:var(--surface2); display:none}
 #pmPhotoPreview.ph{font-size:30px; align-items:center; justify-content:center}
-.chips{cursor:grab}
-.chips.dragging{cursor:grabbing; scroll-behavior:auto}
+.chips button{flex:0 1 auto}
 </style>
 </head>
 <body data-page="beranda">
@@ -1493,8 +1492,8 @@ let lastTx = null;
 let cartCust = null; // pelanggan terpilih di keranjang {id, name}
 
 function renderKasir(){
-  // chips kategori: Terlaris di kiri, Semua di kanan
-  const chips = [{id:"terlaris", name:"Terlaris"}, ...DB.categories, {id:"all", name:"Semua"}];
+  // chips kategori: Terlaris + kategori (tanpa "Semua"; membungkus ke baris berikutnya)
+  const chips = [{id:"terlaris", name:"Terlaris"}, ...DB.categories];
   document.getElementById("catChips").innerHTML = chips.map(c=>
     `<button class="${activeCat===c.id?"active":""}" data-cat="${c.id}">${esc(c.name)}</button>`).join("");
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
@@ -1503,10 +1502,12 @@ function renderKasir(){
   validTx().forEach(t=>t.items.forEach(it=>{ soldMap[it.productId]=(soldMap[it.productId]||0)+it.qty; }));
   const bySold = (a,b)=>(soldMap[b.id]||0)-(soldMap[a.id]||0);
   let list;
-  if(activeCat === "terlaris"){
-    list = [...DB.products].sort(bySold).slice(0,60).filter(matchQ);
+  if(q){
+    list = DB.products.filter(matchQ).sort(bySold);
+  } else if(activeCat === "terlaris"){
+    list = [...DB.products].sort(bySold).slice(0,60);
   } else {
-    list = DB.products.filter(p => (activeCat==="all" || p.catId===activeCat) && matchQ(p)).sort(bySold);
+    list = DB.products.filter(p => p.catId===activeCat).sort(bySold);
   }
   const grid = document.getElementById("prodGrid");
   const row = p => {
@@ -1575,17 +1576,7 @@ document.getElementById("catChips").addEventListener("click", e=>{
   document.getElementById("prodGrid").scrollLeft = 0;
   renderKasir();
 });
-/* kategori bisa digeser dengan drag (tetikus/sentuh) */
-(()=>{
-  const el = document.getElementById("catChips");
-  let down = false, sx = 0, sl = 0, moved = false;
-  el.addEventListener("pointerdown", e=>{ down = true; moved = false; sx = e.clientX; sl = el.scrollLeft; });
-  el.addEventListener("pointermove", e=>{ if(!down) return; const dx = e.clientX - sx; if(Math.abs(dx) > 6){ moved = true; el.classList.add("dragging"); } el.scrollLeft = sl - dx; });
-  const up = ()=>{ down = false; el.classList.remove("dragging"); };
-  el.addEventListener("pointerup", up);
-  el.addEventListener("pointercancel", up);
-  el.addEventListener("click", e=>{ if(moved){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
-})();
+/* kategori tidak digeser: chip membungkus ke baris berikutnya, cukup di-tap */
 document.getElementById("searchInput").addEventListener("input", ()=>{
   document.getElementById("prodGrid").scrollLeft = 0;
   renderKasir();
