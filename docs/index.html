@@ -214,7 +214,7 @@ header.topbar .iconbtn:active{transform:scale(.94)}
 /* Tab atas (layar besar) */
 nav.tabs{top:56px; padding:0 8px}
 nav.tabs button{display:flex; align-items:center; justify-content:center; gap:7px; padding:13px 10px 11px; font-size:14px}
-nav.tabs button .ti{font-size:16px; line-height:1}
+nav.tabs button .ti{font-size:19px; line-height:1}
 
 /* Kartu, tombol, kolom isian */
 .card{border-radius:18px; box-shadow:var(--shadow); padding:16px}
@@ -277,7 +277,7 @@ td{padding:10px 6px}
     padding:5px 2px 3px; border-bottom:none; border-radius:12px;
     font-size:10.5px; color:var(--muted);
   }
-  nav.tabs button .ti{font-size:20px; line-height:1.15; padding:3px 12px; border-radius:999px}
+  nav.tabs button .ti{font-size:24px; line-height:1.15; padding:4px 14px; border-radius:999px}
   nav.tabs button.active{color:var(--accent); font-weight:700}
   nav.tabs button.active .ti{background:var(--accent-soft)}
 }
@@ -463,7 +463,6 @@ body[data-role="kasir"] .verifybar{display:none!important}
   <button data-page="riwayat"><span class="ti">🕘</span><span class="tl">Riwayat</span></button>
   <button data-page="laporan"><span class="ti">📊</span><span class="tl">Laporan</span></button>
   <button data-page="analisa"><span class="ti">📈</span><span class="tl">Analisa</span></button>
-  <button data-page="pengaturan"><span class="ti">⚙️</span><span class="tl">Pengaturan</span></button>
   <button data-page="admin" id="navAdmin" style="display:none"><span class="ti">🛡️</span><span class="tl">Admin</span></button>
 </nav>
 
@@ -1111,14 +1110,17 @@ function applyTheme(){
 function toggleTheme(){ DB.settings.theme = DB.settings.theme==="dark" ? "light" : "dark"; save(); applyTheme(); syncSettingsForm(); }
 
 /* ---------- navigasi ---------- */
+function gotoPage(page){
+  document.body.dataset.page = page;
+  document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.toggle("active", x.dataset.page===page));
+  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active", p.id==="page-"+page));
+  if(page === "admin") loadAdmin();
+  renderAll();
+}
 document.getElementById("tabs").addEventListener("click", e=>{
   const b = e.target.closest("button[data-page]"); if(!b) return;
   if(roleMode === "kasir" && ["riwayat","laporan","analisa","pengaturan"].includes(b.dataset.page)) return;
-  document.body.dataset.page = b.dataset.page;
-  document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.toggle("active", x===b));
-  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active", p.id==="page-"+b.dataset.page));
-  if(b.dataset.page === "admin") loadAdmin();
-  renderAll();
+  gotoPage(b.dataset.page);
 });
 
 /* ---------- modal ---------- */
@@ -1667,7 +1669,7 @@ function renderAvatar(){
 }
 document.getElementById("avatarBtn").addEventListener("click", ()=>{ renderAvatar(); updateAccountUI(); openModal("accountModal"); });
 document.getElementById("amThemeRow").addEventListener("click", ()=>toggleTheme());
-document.getElementById("amSettingsRow").addEventListener("click", ()=>{ closeModals(); document.querySelector('button[data-page="pengaturan"]').click(); });
+document.getElementById("amSettingsRow").addEventListener("click", ()=>{ closeModals(); gotoPage("pengaturan"); });
 document.getElementById("amLogoutRow").addEventListener("click", ()=>{ closeModals(); doLogout(); });
 document.getElementById("amLoginRow").addEventListener("click", ()=>{ closeModals(); localOnly = false; showAuthGate(); });
 document.getElementById("amAvatarRow").addEventListener("click", ()=>document.getElementById("avatarFile").click());
