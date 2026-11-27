@@ -427,7 +427,7 @@ body[data-page="kasir"] .headsearch{display:flex}
 .cashchips .chip:active{background:var(--accent); color:#fff; border-color:var(--accent)}
 .cashchips .cnt{position:absolute; top:-8px; right:-6px; background:var(--accent); color:#fff; font-size:11px; font-weight:800; line-height:1; padding:4px 7px; border-radius:999px; box-shadow:0 3px 8px rgba(15,23,42,.3); pointer-events:none}
 
-/* Mode Kasir: sembunyikan fitur pemilik & data keuangan */
+/* Mode Kasir: sembunyikan fitur superuser & data keuangan */
 body[data-role="kasir"] nav.tabs button[data-page="riwayat"],
 body[data-role="kasir"] nav.tabs button[data-page="laporan"],
 body[data-role="kasir"] nav.tabs button[data-page="analisa"],
@@ -742,7 +742,7 @@ body[data-role="kasir"] .verifybar{display:none!important}
     </div>
     <div class="menurow" id="amOwnerRow" style="display:none">
       <span class="mic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></span>
-      Mode Pemilik <span class="chev">›</span>
+      Superuser Mode <span class="chev">›</span>
     </div>
     <div class="menurow" id="amLoginRow" style="display:none">
       <span class="mic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></span>
@@ -1911,8 +1911,8 @@ function pinAsk(mode){
   return new Promise(res=>{
     pinResolve = res; pinMode = mode;
     const isSet = mode === "set";
-    document.getElementById("pinTitle").textContent = isSet ? "Atur PIN Kasir" : "Mode Pemilik";
-    document.getElementById("pinDesc").textContent = isSet ? "Buat PIN 4–6 digit." : "Masukkan PIN pemilik.";
+    document.getElementById("pinTitle").textContent = isSet ? "Atur PIN Kasir" : "Superuser Mode";
+    document.getElementById("pinDesc").textContent = isSet ? "Buat PIN 4–6 digit." : "Masukkan PIN superuser.";
     document.getElementById("pinOk").textContent = isSet ? "Simpan PIN" : "Buka Kunci";
     document.getElementById("pin2Wrap").style.display = isSet ? "" : "none";
     document.getElementById("pinForgot").style.display = (!isSet && currentUser) ? "" : "none";
@@ -1943,7 +1943,7 @@ document.getElementById("pinOk").addEventListener("click", async ()=>{
 });
 document.getElementById("pinForgot").addEventListener("click", async ()=>{
   document.getElementById("pinModal").classList.remove("open");
-  const pw = await askPassword("Buka Mode Pemilik", "Buka");
+  const pw = await askPassword("Buka Superuser Mode", "Buka");
   if(pw) pinDone(true);
   else openModal("pinModal");
 });
@@ -1962,7 +1962,7 @@ document.getElementById("amOwnerRow").addEventListener("click", async ()=>{
   closeModals();
   if(await pinAsk("unlock")){
     setRole("owner");
-    dlgAlert("Mode Pemilik aktif.");
+    dlgAlert("Superuser Mode aktif.");
   }
 });
 document.getElementById("authForgot").addEventListener("click", async e=>{
