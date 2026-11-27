@@ -11,12 +11,27 @@ android {
         applicationId = "id.onga.kasir"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
+    }
+
+    signingConfigs {
+        create("release") {
+            val ksFile = System.getenv("KEYSTORE_FILE")
+            if (ksFile != null) {
+                storeFile = file(ksFile)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
+            if (System.getenv("KEYSTORE_FILE") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

@@ -2,9 +2,11 @@ package id.onga.kasir
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.print.PrintAttributes
 import android.print.PrintManager
@@ -20,6 +22,9 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
  * Kasir Onga V.1 — aplikasi Android untuk Kasir Onga versi web.
@@ -140,6 +145,62 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) {
             webView.loadUrl(AppConfig.WEB_APP_URL)
         }
+        checkForUpdate()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkForUpdate()
+    }
+
+    /* ---------- force update: cek version.json di server ---------- */
+    private var updateDialogShowing = false
+
+    private fun checkForUpdate() {
+        Thread {
+            try {
+                val conn = URL(AppConfig.VERSION_JSON_URL).openConnection() as HttpURLConnection
+                conn.connectTimeout = 8000
+                conn.readTimeout = 8000
+                val text = conn.inputStream.bufferedReader().readText()
+                val json = JSONObject(text)
+                val minCode = json.optInt("minVersionCode", 0)
+                val apkUrl = json.optString("apkUrl", AppConfig.APK_DOWNLOAD_URL)
+                val msg = json.optString(
+                    "message",
+                    "Ada versi baru Kasir Onga. Perbarui untuk melanjutkan."
+                )
+                val info = packageManager.getPackageInfo(packageName, 0)
+                val installed = if (Build.VERSION.SDK_INT >= 28) {
+                    info.longVersionCode.toInt()
+                } else {
+                    @Suppress("DEPRECATION") info.versionCode
+                }
+                if (installed < minCode) {
+                    runOnUiThread { showUpdateDialog(msg, apkUrl) }
+                }
+            } catch (e: Exception) {
+                /* gagal cek (mis. offline) tidak mengganggu pemakaian */
+            }
+        }.start()
+    }
+
+    private fun showUpdateDialog(msg: String, apkUrl: String) {
+        if (updateDialogShowing || isFinishing) return
+        updateDialogShowing = true
+        AlertDialog.Builder(this)
+            .setTitle("Pembaruan Diperlukan")
+            .setMessage(msg)
+            .setCancelable(false)
+            .setPositiveButton("Perbarui Sekarang") { _, _ ->
+                updateDialogShowing = false
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl)))
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Tidak bisa membuka tautan unduhan", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .show()
     }
 
     private fun printCurrentPage() {
