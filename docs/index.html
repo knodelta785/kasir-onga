@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#2563eb">
 <script>
 /* Anti-cache: bila ada versi web lebih baru, muat ulang sekali ke versi itu */
-var APP_BUILD = "20261127-10";
+var APP_BUILD = "20261128-01";
 (function(){
   try{
     fetch("version.json?cb=" + Date.now(), {cache:"no-store"}).then(function(r){ return r.json(); }).then(function(v){
@@ -1234,10 +1234,12 @@ if(!Array.isArray(DB.customers)) DB.customers = [];
 if(!DB._updatedAt) DB._updatedAt = Date.now();
 
 /* ---------- Sinkronisasi real-time Firebase (Firestore) ----------
-   Seluruh state aplikasi disimpan sebagai satu dokumen
-   kasironga/main. Perangkat lain yang membuka aplikasi akan
-   menerima perubahan lewat onSnapshot (real-time). Bila
-   FIREBASE_CONFIG kosong, aplikasi berjalan mode lokal. */
+   State aplikasi disimpan di dokumen toko/{uid}; produk disimpan
+   terpisah sebagai subcollection toko/{uid}/produk (satu dokumen
+   per produk) agar foto & jumlah produk tidak menabrak batas
+   1 MB dokumen utama. Perangkat lain menerima perubahan lewat
+   onSnapshot (real-time). Bila FIREBASE_CONFIG kosong, aplikasi
+   berjalan mode lokal. */
 let fbDoc = null, applyingRemote = false, pushTimer = null;
 function setSync(txt){ const el = document.getElementById("syncStatus"); if(el) el.textContent = txt; }
 function save(){
@@ -1254,9 +1256,103 @@ function pushNow(){
   if(!fbDoc) return;
   DB._updatedAt = Date.now();
   try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){}
-  fbDoc.set(DB)
+  const main = Object.assign({}, DB, {products: []});
+  fbDoc.set(main)
     .then(()=>setSync("Real-time aktif"))
     .catch(()=>setSync("Gagal simpan / offline"));
+  pushProds();
+}
+
+/* ---------- Produk per dokumen (subcollection produk) ----------
+   prodBase = JSON terakhir yang tersinkron per id produk (kunci
+   terurut agar perbandingan stabil). pushProds menulis selisihnya
+   saja lewat batch; _u = cap waktu versi tiap produk. */
+let fbProdCol = null, fbProdUnsub = null, prodsReady = false, prodInitStarted = false, prodBase = {};
+function prodJson(p){
+  const o = {};
+  Object.keys(p).sort().forEach(k=>{ o[k] = p[k]; });
+  return JSON.stringify(o);
+}
+function pushProds(){
+  if(!fbProdCol || !prodsReady) return;
+  const now = Date.now();
+  const cur = {};
+  DB.products.forEach(p=>{ cur[String(p.id)] = p; });
+  const writes = [], deletes = [];
+  Object.keys(cur).forEach(id=>{ if(prodBase[id] !== prodJson(cur[id])) writes.push(id); });
+  Object.keys(prodBase).forEach(id=>{ if(!cur[id]) deletes.push(id); });
+  if(!writes.length && !deletes.length) return;
+  const ops = [];
+  writes.forEach(id=>{ cur[id]._u = now; ops.push({t:"set", id, data:Object.assign({}, cur[id])}); });
+  deletes.forEach(id=>ops.push({t:"del", id}));
+  let chain = Promise.resolve();
+  for(let i=0;i<ops.length;i+=400){
+    const ch = ops.slice(i, i+400);
+    chain = chain.then(()=>{
+      const b = fbDb.batch();
+      ch.forEach(o=>{ const ref = fbProdCol.doc(o.id); if(o.t === "set") b.set(ref, o.data); else b.delete(ref); });
+      return b.commit();
+    });
+  }
+  chain.then(()=>{
+    writes.forEach(id=>{ prodBase[id] = prodJson(cur[id]); });
+    deletes.forEach(id=>{ delete prodBase[id]; });
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){}
+  }).catch(()=>setSync("Gagal simpan produk / offline"));
+}
+async function initProds(legacy){
+  if(!fbProdCol) return;
+  try{
+    const snap = await fbProdCol.get();
+    if(!snap.empty){
+      applyingRemote = true;
+      DB.products = snap.docs.map(d=>d.data());
+      prodBase = {};
+      DB.products.forEach(p=>{ prodBase[String(p.id)] = prodJson(p); });
+      applyingRemote = false;
+    } else if(legacy && legacy.length){
+      DB.products = legacy;
+      DB.settings.splitV = 1;
+      prodBase = {};
+    } else {
+      prodBase = {};
+    }
+    prodsReady = true;
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){}
+    renderAll();
+    pushProds();
+    if(DB.settings.splitV) pushNow();
+    subscribeProds();
+  }catch(e){ setSync("Gagal memuat produk"); }
+}
+function subscribeProds(){
+  if(!fbProdCol) return;
+  if(fbProdUnsub) fbProdUnsub();
+  fbProdUnsub = fbProdCol.onSnapshot(snap=>{
+    if(snap.metadata.hasPendingWrites) return;
+    let changed = false;
+    applyingRemote = true;
+    snap.docChanges().forEach(ch=>{
+      const id = ch.doc.id, data = ch.doc.data();
+      const idx = DB.products.findIndex(p=>String(p.id) === id);
+      if(ch.type === "removed"){
+        if(idx >= 0 && prodBase[id] === prodJson(DB.products[idx])){ DB.products.splice(idx, 1); changed = true; }
+        delete prodBase[id];
+        return;
+      }
+      const localDirty = idx >= 0 && prodBase[id] !== prodJson(DB.products[idx]);
+      if(!localDirty && (idx < 0 || (data._u || 0) >= (DB.products[idx]._u || 0))){
+        if(idx >= 0) DB.products[idx] = data; else DB.products.push(data);
+        prodBase[id] = prodJson(data);
+        changed = true;
+      }
+    });
+    applyingRemote = false;
+    if(changed){
+      try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){}
+      renderAll();
+    }
+  }, ()=>{});
 }
 let fbDb = null, fbUnsub = null, currentUser = null, localOnly = false, pendingShopName = "";
 function initFirebase(){
@@ -1271,7 +1367,8 @@ function initFirebase(){
       if(user){ hideAuthGate(); subscribeTenant(user.uid); if(DB.settings.ownerEmail !== user.email){ DB.settings.ownerEmail = user.email; save(); } }
       else{
         if(fbUnsub){ fbUnsub(); fbUnsub = null; }
-        fbDoc = null;
+        if(fbProdUnsub){ fbProdUnsub(); fbProdUnsub = null; }
+        fbDoc = null; fbProdCol = null; prodsReady = false; prodBase = {}; prodInitStarted = false;
         if(!localOnly){ showAuthGate(); setSync("Belum masuk"); }
         else setSync("Mode lokal");
       }
@@ -1280,24 +1377,30 @@ function initFirebase(){
 }
 function subscribeTenant(uid){
   fbDoc = fbDb.collection("toko").doc(uid);
+  fbProdCol = fbDoc.collection("produk");
   if(fbUnsub) fbUnsub();
   fbUnsub = fbDoc.onSnapshot(snap=>{
     if(snap.metadata.hasPendingWrites) return;
     if(!snap.exists){
       if(pendingShopName){ DB.settings.shopName = pendingShopName; pendingShopName = ""; }
       pushNow(); applyTheme(); syncSettingsForm(); renderAll(); updateAccountUI();
+      if(!prodInitStarted){ prodInitStarted = true; initProds(null); }
       return;
     }
     const remote = snap.data();
+    const legacy = (!remote.settings || !remote.settings.splitV) && Array.isArray(remote.products) && remote.products.length ? remote.products : null;
     if(remote && (remote._updatedAt||0) > (DB._updatedAt||0)){
+      const keepProds = DB.products;
       applyingRemote = true;
       DB = remote;
+      DB.products = keepProds;
       if(!Array.isArray(DB.customers)) DB.customers = [];
       try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){}
       applyingRemote = false;
       applyTheme(); syncSettingsForm(); renderAll(); renderSub();
       if(currentUser && DB.settings.ownerEmail !== currentUser.email){ DB.settings.ownerEmail = currentUser.email; save(); }
     }
+    if(!prodInitStarted){ prodInitStarted = true; initProds(legacy); }
     setSync("Real-time aktif");
   }, ()=> setSync("Koneksi database gagal"));
 }
@@ -2661,6 +2764,18 @@ async function deleteAccountFlow(){
   if(!pass) return;
   if(!await dlgConfirm("Hapus akun + semua data? Tidak bisa kembali.", "Hapus Permanen")) return;
   try{
+    if(fbProdUnsub){ fbProdUnsub(); fbProdUnsub = null; }
+    if(fbProdCol){
+      try{
+        const ps = await fbProdCol.get();
+        for(let i=0;i<ps.docs.length;i+=400){
+          const b = fbDb.batch();
+          ps.docs.slice(i, i+400).forEach(d=>b.delete(d.ref));
+          await b.commit();
+        }
+      }catch(e){}
+      fbProdCol = null; prodsReady = false; prodBase = {};
+    }
     if(fbDoc){
       if(fbUnsub){ fbUnsub(); fbUnsub = null; }
       await fbDoc.delete(); fbDoc = null;
