@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#2563eb">
 <script>
 /* Anti-cache: bila ada versi web lebih baru, muat ulang sekali ke versi itu */
-var APP_BUILD = "20261128-08";
+var APP_BUILD = "20261128-10";
 (function(){
   try{
     fetch("version.json?cb=" + Date.now(), {cache:"no-store"}).then(function(r){ return r.json(); }).then(function(v){
@@ -537,6 +537,30 @@ html[data-theme="dark"] #themeBtn .ic-moon{display:none}
 .paygrid button{color:var(--text)}
 .qtyctrl button{color:var(--text)}
 ::placeholder{color:var(--muted); opacity:.8}
+/* ===== Pembelian + Supplier (build 20261128-10) ===== */
+body[data-role="kasir"] nav.tabs button[data-page="pembelian"],
+body[data-role="kasir"] nav.tabs button[data-page="supplier"],
+body[data-role="kasir"] .home-tile[data-goto="pembelian"],
+body[data-role="kasir"] .home-tile[data-goto="supplier"]{display:none}
+.purrow{display:flex; gap:8px; align-items:center; padding:8px 0; border-bottom:1px dashed var(--border)}
+.purrow .pn{flex:1; min-width:0; font-weight:600; font-size:14px}
+.purrow input{width:74px; padding:8px}
+.purrow .pc{width:104px}
+.purrow .pt{min-width:86px; text-align:right; font-weight:700; font-size:14px}
+.purrow .pdel{border:0; background:transparent; color:var(--danger); font-size:17px; cursor:pointer; padding:6px}
+/* ===== Laporan infografis + insight (build 20261128-09) ===== */
+.hbar{margin:11px 0}
+.hbar .hb-top{display:flex; justify-content:space-between; gap:10px; font-size:13.5px; margin-bottom:5px}
+.hbar .hb-track{height:10px; border-radius:99px; background:var(--accent-soft); overflow:hidden}
+.hbar .hb-fill{height:100%; border-radius:99px; background:var(--accent)}
+.plrow{display:flex; justify-content:space-between; gap:10px; padding:6px 0; font-size:14.5px}
+.plrow.total{border-top:1px dashed var(--border); margin-top:6px; padding-top:10px; font-weight:800; font-size:15.5px}
+.card.insight{background:color-mix(in srgb, #f59e0b 10%, var(--surface)); border:1px solid color-mix(in srgb, #f59e0b 45%, transparent)}
+.insrow{display:flex; gap:10px; padding:6px 0; font-size:14px; align-items:flex-start; line-height:1.45}
+.insrow .ic{font-size:17px; line-height:1.25}
+.up{color:#16a34a; font-weight:700}
+.down{color:#dc2626; font-weight:700}
+.stat .sub{font-size:12px; margin-top:3px; color:var(--muted)}
 /* ===== Harga grosir bertingkat + struk JPG (build 20261128-08) ===== */
 .trow{display:flex; gap:8px; margin-bottom:8px}
 .trow input{flex:1; min-width:0}
@@ -725,10 +749,12 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
   <button data-page="kasir"><span class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/></svg></span><span class="tl">Transaksi Penjualan</span></button>
   <button data-page="riwayat"><span class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span class="tl">Riwayat Transaksi</span></button>
   <button data-page="piutang"><span class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span><span class="tl">Piutang</span></button>
+  <button data-page="pembelian"><span class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span class="tl">Pembelian</span></button>
   <button class="dact" id="drawerHold"><span class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></span><span class="tl">Simpan Dulu</span></button>
   <div class="dsec">MANAJEMEN</div>
   <button data-page="produk"><span class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span><span class="tl">Barang &amp; Jasa</span></button>
   <button data-page="pelanggan"><span class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="tl">Pelanggan</span></button>
+  <button data-page="supplier"><span class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span><span class="tl">Supplier</span></button>
   <button class="dact" id="drawerCats"><span class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span class="tl">Kategori</span></button>
   <div class="dsec">LAPORAN</div>
   <button data-page="laporan"><span class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></span><span class="tl">Laporan Penjualan</span></button>
@@ -757,6 +783,8 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
       <button class="home-tile" data-goto="riwayat"><span class="ti"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>Riwayat</button>
       <button class="home-tile" data-goto="piutang"><span class="ti"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>Piutang</button>
       <button class="home-tile" data-goto="pelanggan"><span class="ti"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Pelanggan</button>
+      <button class="home-tile" data-goto="pembelian"><span class="ti"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>Pembelian</button>
+      <button class="home-tile" data-goto="supplier"><span class="ti"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>Supplier</button>
       <button class="home-tile" data-goto="laporan"><span class="ti"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></span>Laporan</button>
       <button class="home-tile" data-goto="analisa"><span class="ti"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span>Analisa</button>
       <button class="home-tile" data-goto="pengaturan"><span class="ti"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span>Pengaturan</button>
@@ -880,6 +908,26 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
     <div class="grid" id="debtList" style="margin-top:12px"></div>
   </section>
 
+  <!-- ================= PEMBELIAN ================= -->
+  <section class="page" id="page-pembelian">
+    <div class="row wrap">
+      <h2 style="flex:1; margin:0">Pembelian</h2>
+      <button class="btn primary owner-only" id="addPurBtn">+ Pembelian Baru</button>
+    </div>
+    <div class="statgrid" id="purSummary" style="margin-top:12px"></div>
+    <div class="grid" id="purList" style="margin-top:12px"></div>
+  </section>
+
+  <!-- ================= SUPPLIER ================= -->
+  <section class="page" id="page-supplier">
+    <div class="row wrap">
+      <h2 style="flex:1; margin:0">Supplier</h2>
+      <button class="btn primary owner-only" id="addSupBtn">+ Tambah</button>
+    </div>
+    <input id="supSearch" type="search" placeholder="🔍  Cari supplier…" style="margin-top:12px">
+    <div class="grid" id="supList" style="margin-top:12px"></div>
+  </section>
+
   <!-- ================= LAPORAN ================= -->
   <section class="page" id="page-laporan">
     <h2>Laporan</h2>
@@ -890,10 +938,19 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
       <button class="btn" id="repCsv" style="align-self:flex-end">⬇ Ekspor CSV</button>
     </div>
     <div class="statgrid" style="margin-top:14px" id="repStats"></div>
+    <div class="card insight" style="margin-top:12px"><h3 style="margin-top:0">💡 Insight Pemilik</h3><div id="repInsights"></div></div>
+    <div class="card" style="margin-top:12px"><h3 style="margin-top:0">Tren Omzet</h3><div class="bars" id="repTrend"></div></div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-top:12px">
+      <div class="card"><h3 style="margin-top:0">Laba Rugi</h3><div id="repPL"></div></div>
+      <div class="card"><h3 style="margin-top:0">Arus Kas Masuk</h3><div id="repCash"></div></div>
+      <div class="card"><h3 style="margin-top:0">Piutang</h3><div id="repDebt"></div></div>
+      <div class="card"><h3 style="margin-top:0">Pembelian</h3><div id="repPur"></div></div>
+    </div>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-top:12px">
       <div class="card"><h3 style="margin-top:0">Per Metode Pembayaran</h3><div id="repByPay"></div></div>
-      <div class="card"><h3 style="margin-top:0">Per Produk</h3><div id="repByProduct"></div></div>
+      <div class="card"><h3 style="margin-top:0">Per Kategori</h3><div id="repByCat"></div></div>
     </div>
+    <div class="card" style="margin-top:12px"><h3 style="margin-top:0">Per Produk</h3><div id="repByProduct"></div></div>
   </section>
 
   <!-- ================= ANALISA ================= -->
@@ -1336,6 +1393,96 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
   </div>
 </div>
 
+<!-- ================= MODAL SUPPLIER ================= -->
+<div class="modal" id="supModal">
+  <div class="sheet">
+    <h2 id="spTitle">Tambah Supplier</h2>
+    <input type="hidden" id="spId">
+    <label>Nama</label><input id="spName">
+    <label>No. HP / WA</label><input id="spPhone" inputmode="tel">
+    <label>Alamat</label><input id="spAddr">
+    <div class="grid" style="margin-top:16px">
+      <button class="btn primary block" id="spSave">Simpan</button>
+      <button class="btn block" data-close>Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL PEMBELIAN ================= -->
+<div class="modal" id="purModal">
+  <div class="sheet">
+    <h2>Pembelian Baru</h2>
+    <label>Supplier</label>
+    <div class="row"><select id="purSup" style="flex:1"></select><button class="btn" id="purSupAdd">+ Baru</button></div>
+    <label style="margin-top:12px">Produk dibeli</label>
+    <div id="purItems"></div>
+    <button class="btn block" id="purAddItem" style="margin-top:10px">+ Tambah Produk</button>
+    <div class="plrow total"><span>Total</span><b id="purTotal">Rp0</b></div>
+    <label style="margin-top:8px">Pembayaran</label>
+    <div class="row">
+      <button class="btn primary" id="purPayTunai" style="flex:1">Tunai (lunas)</button>
+      <button class="btn" id="purPayHutang" style="flex:1">Hutang</button>
+    </div>
+    <div id="purDebtBox" style="display:none; margin-top:10px">
+      <label>Dibayar sekarang (Rp)</label>
+      <input id="purPaid" type="text" inputmode="numeric" autocomplete="off" placeholder="0">
+      <label>Jatuh tempo</label>
+      <input id="purDue" type="date">
+    </div>
+    <div class="grid" style="margin-top:16px">
+      <button class="btn primary block" id="purSave">Simpan Pembelian</button>
+      <button class="btn block" data-close>Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL PILIH PRODUK BELI ================= -->
+<div class="modal" id="purPickModal">
+  <div class="sheet">
+    <h2>Pilih Produk</h2>
+    <input id="ppSearch" type="search" placeholder="🔍  Cari produk…">
+    <div id="ppList" class="grid" style="margin-top:12px"></div>
+    <div class="grid" style="margin-top:14px">
+      <button class="btn block" data-close>Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL DETAIL PEMBELIAN ================= -->
+<div class="modal" id="purDetailModal">
+  <div class="sheet">
+    <h2>Detail Pembelian</h2>
+    <input type="hidden" id="pdId">
+    <div id="pdInfo" class="small" style="margin-bottom:8px"></div>
+    <div id="pdItems"></div>
+    <div id="pdPays" style="margin-top:8px"></div>
+    <div class="grid" style="margin-top:16px">
+      <button class="btn primary block" id="pdPayBtn">Bayar Hutang</button>
+      <button class="btn red block" id="pdDelBtn">Hapus Pembelian</button>
+      <button class="btn block" data-close>Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL BAYAR HUTANG SUPPLIER ================= -->
+<div class="modal" id="purPayModal">
+  <div class="sheet">
+    <h2>Bayar Hutang Supplier</h2>
+    <input type="hidden" id="ppId">
+    <div id="ppInfo" class="small" style="margin-bottom:8px"></div>
+    <label>Jumlah bayar (Rp)</label>
+    <input id="ppAmt" type="text" inputmode="numeric" autocomplete="off">
+    <label>Metode</label>
+    <select id="ppMethod">
+      <option>Tunai</option><option>Transfer</option><option>QRIS</option><option>E-wallet</option>
+    </select>
+    <div class="grid" style="margin-top:16px">
+      <button class="btn primary block" id="ppSave">Simpan Pembayaran</button>
+      <button class="btn block" data-close>Batal</button>
+    </div>
+  </div>
+</div>
+
 <!-- ================= MODAL SIMPAN DULU ================= -->
 <div class="modal" id="holdModal">
   <div class="sheet">
@@ -1419,7 +1566,7 @@ function seedData(){
   }
   return {
     settings:{shopName:"Jajan Frozen Food", shopAddr:"Jl. Kartini No. 8, Kota Manna", shopWa:"081288246154", receiptFooter:"Terima kasih sudah belanja!", accent:"#2563eb", lowStock:10, theme:"light"},
-    categories:cats, products, transactions, held:[], stockMoves:[], customers:[],
+    categories:cats, products, transactions, held:[], stockMoves:[], customers:[], suppliers:[], purchases:[],
   };
 }
 
@@ -1429,13 +1576,15 @@ function emptyData(){
   return {
     settings:{shopName:"Toko Saya", shopAddr:"", shopWa:"", receiptFooter:"Terima kasih sudah belanja!", accent:"#2563eb", lowStock:10, theme:"light"},
     categories:[],
-    products:[], transactions:[], held:[], stockMoves:[], customers:[],
+    products:[], transactions:[], held:[], stockMoves:[], customers:[], suppliers:[], purchases:[],
   };
 }
 
 let DB;
 try{ DB = JSON.parse(localStorage.getItem(LS_KEY)) || emptyData(); }catch(e){ DB = emptyData(); }
 if(!Array.isArray(DB.customers)) DB.customers = [];
+if(!Array.isArray(DB.suppliers)) DB.suppliers = [];
+if(!Array.isArray(DB.purchases)) DB.purchases = [];
 if(!DB._updatedAt) DB._updatedAt = Date.now();
 
 /* ---------- Sinkronisasi real-time Firebase (Firestore) ----------
@@ -1600,6 +1749,8 @@ function subscribeTenant(uid){
       DB = remote;
       DB.products = keepProds;
       if(!Array.isArray(DB.customers)) DB.customers = [];
+      if(!Array.isArray(DB.suppliers)) DB.suppliers = [];
+      if(!Array.isArray(DB.purchases)) DB.purchases = [];
       try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){}
       applyingRemote = false;
       applyTheme(); syncSettingsForm(); renderAll(); renderSub();
@@ -1722,14 +1873,14 @@ document.getElementById("bottomNav").addEventListener("click", e=>{
 });
 document.getElementById("homeStart").addEventListener("click", ()=>gotoPage("kasir"));
 document.querySelectorAll(".home-tile").forEach(t=>t.addEventListener("click", ()=>{
-  if(roleMode === "kasir" && ["riwayat","laporan","analisa","pengaturan","pelanggan","piutang"].includes(t.dataset.goto)) return;
+  if(roleMode === "kasir" && ["riwayat","laporan","analisa","pengaturan","pelanggan","piutang","pembelian","supplier"].includes(t.dataset.goto)) return;
   gotoPage(t.dataset.goto);
 }));
 document.getElementById("cartBar").addEventListener("click", ()=>document.getElementById("cartCard").classList.add("open"));
 document.getElementById("cartClose").addEventListener("click", ()=>document.getElementById("cartCard").classList.remove("open"));
 document.getElementById("tabs").addEventListener("click", e=>{
   const b = e.target.closest("button[data-page]"); if(!b) return;
-  if(roleMode === "kasir" && ["beranda","riwayat","laporan","analisa","pengaturan","pelanggan","piutang","langganan"].includes(b.dataset.page)) return;
+  if(roleMode === "kasir" && ["beranda","riwayat","laporan","analisa","pengaturan","pelanggan","piutang","pembelian","supplier","langganan"].includes(b.dataset.page)) return;
   gotoPage(b.dataset.page);
 });
 
@@ -2673,28 +2824,333 @@ document.getElementById("dpSave").addEventListener("click", ()=>{
   dlgAlert(txDebt(t) > 0 ? "Pembayaran tercatat. Sisa " + rp(txDebt(t)) + "." : "Piutang sudah lunas.");
 });
 
+/* ----- Supplier ----- */
+const supById = id => (DB.suppliers||[]).find(s=>s.id===id);
+function purPaid(p){ if(!p) return 0; if(p.pay !== "Hutang") return p.total; return (p.payments||[]).reduce((s,x)=>s+(x.amt||0),0); }
+function purDebt(p){ return Math.max(0, (p ? p.total : 0) - purPaid(p)); }
+function supDebt(id){ return (DB.purchases||[]).filter(p=>p.supId===id).reduce((s,p)=>s+purDebt(p),0); }
+function renderSupplier(){
+  const q = (document.getElementById("supSearch").value||"").trim().toLowerCase();
+  const list = (DB.suppliers||[]).filter(s=>!q || s.name.toLowerCase().includes(q) || (s.phone||"").includes(q));
+  document.getElementById("supList").innerHTML = list.length ? list.map(s=>{
+    const d = supDebt(s.id);
+    return `<div class="card">
+      <div class="row wrap"><b>${esc(s.name)}</b>${d>0?`<span class="badge warn">Hutang ${rp(d)}</span>`:""}<span class="spacer"></span>
+      <span class="owner-only"><button class="btn sm" data-sedit="${s.id}">Edit</button> <button class="btn sm red" data-sdel="${s.id}">Hapus</button></span></div>
+      <div class="small muted" style="margin-top:4px">${esc(s.phone||"")}${s.addr?" • "+esc(s.addr):""}</div>
+    </div>`;
+  }).join("") : `<div class="empty card">Belum ada supplier.</div>`;
+}
+document.getElementById("supSearch").addEventListener("input", renderSupplier);
+let supAfterSave = false;
+function openSupForm(s){
+  document.getElementById("spTitle").textContent = s ? "Edit Supplier" : "Tambah Supplier";
+  document.getElementById("spId").value = s ? s.id : "";
+  document.getElementById("spName").value = s ? s.name : "";
+  document.getElementById("spPhone").value = s ? (s.phone||"") : "";
+  document.getElementById("spAddr").value = s ? (s.addr||"") : "";
+  openModal("supModal");
+}
+document.getElementById("addSupBtn").addEventListener("click", ()=>{ supAfterSave = false; openSupForm(null); });
+document.getElementById("spSave").addEventListener("click", ()=>{
+  const name = document.getElementById("spName").value.trim();
+  if(!name){ dlgAlert("Nama wajib diisi."); return; }
+  const id = document.getElementById("spId").value;
+  const data = {name, phone:document.getElementById("spPhone").value.trim(), addr:document.getElementById("spAddr").value.trim()};
+  let saved;
+  if(id){ saved = supById(id); if(saved) Object.assign(saved, data); }
+  else { saved = {id:uid(), ...data}; DB.suppliers.push(saved); }
+  save(); renderAll();
+  if(supAfterSave && saved){ supAfterSave = false; fillPurSup(); document.getElementById("purSup").value = saved.id; openModal("purModal"); }
+  else closeModals();
+});
+document.getElementById("supList").addEventListener("click", async e=>{
+  const ed = e.target.closest("[data-sedit]"), del = e.target.closest("[data-sdel]");
+  if(ed){ supAfterSave = false; openSupForm(supById(ed.dataset.sedit)); }
+  if(del){
+    const s = supById(del.dataset.sdel); if(!s) return;
+    if(supDebt(s.id) > 0){ dlgAlert("Supplier ini masih punya hutang belum lunas."); return; }
+    if(!await dlgConfirm("Hapus supplier " + s.name + "?", "Hapus")) return;
+    DB.suppliers = DB.suppliers.filter(x=>x.id!==s.id);
+    save(); renderAll();
+  }
+});
+
+/* ----- Pembelian ----- */
+let purCart = [], purPayMode = "Tunai";
+const purTotalCalc = () => purCart.reduce((s,it)=>s + it.qty*it.cost, 0);
+function fillPurSup(){
+  document.getElementById("purSup").innerHTML = (DB.suppliers||[]).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
+}
+function renderPurItems(){
+  document.getElementById("purItems").innerHTML = purCart.length ? purCart.map((it,i)=>`
+    <div class="purrow"><span class="pn">${esc(it.name)}</span>
+    <input type="number" min="0" value="${it.qty}" data-pq="${i}" aria-label="Qty">
+    <input class="pc" type="number" min="0" value="${it.cost}" data-pc="${i}" aria-label="Harga beli">
+    <span class="pt">${rp(it.qty*it.cost)}</span>
+    <button class="pdel" data-pdel="${i}" aria-label="Hapus">✕</button></div>`).join("") :
+    `<div class="small muted">Belum ada produk. Tap "+ Tambah Produk".</div>`;
+  document.getElementById("purTotal").textContent = rp(purTotalCalc());
+}
+document.getElementById("purItems").addEventListener("input", e=>{
+  const q = e.target.closest("[data-pq]"), c = e.target.closest("[data-pc]");
+  if(!q && !c) return;
+  const i = +(q ? q.dataset.pq : c.dataset.pc);
+  if(q) purCart[i].qty = Math.max(0, parseInt(q.value,10)||0);
+  if(c) purCart[i].cost = Math.max(0, parseInt(c.value,10)||0);
+  const row = e.target.closest(".purrow");
+  if(row) row.querySelector(".pt").textContent = rp(purCart[i].qty*purCart[i].cost);
+  document.getElementById("purTotal").textContent = rp(purTotalCalc());
+});
+document.getElementById("purItems").addEventListener("click", e=>{
+  const d = e.target.closest("[data-pdel]"); if(!d) return;
+  purCart.splice(+d.dataset.pdel, 1); renderPurItems();
+});
+function setPurPay(mode){
+  purPayMode = mode;
+  document.getElementById("purPayTunai").className = "btn" + (mode==="Tunai" ? " primary" : "");
+  document.getElementById("purPayHutang").className = "btn" + (mode==="Hutang" ? " primary" : "");
+  document.getElementById("purDebtBox").style.display = mode==="Hutang" ? "" : "none";
+}
+document.getElementById("purPayTunai").addEventListener("click", ()=>setPurPay("Tunai"));
+document.getElementById("purPayHutang").addEventListener("click", ()=>setPurPay("Hutang"));
+function openPurForm(){
+  if(!(DB.suppliers||[]).length){ supAfterSave = false; dlgAlert("Tambah supplier dulu."); openSupForm(null); return; }
+  purCart = []; setPurPay("Tunai");
+  fillPurSup(); renderPurItems();
+  document.getElementById("purPaid").value = "";
+  const d = new Date(); d.setDate(d.getDate()+7);
+  document.getElementById("purDue").value = todayStr(d);
+  openModal("purModal");
+}
+document.getElementById("addPurBtn").addEventListener("click", openPurForm);
+document.getElementById("purSupAdd").addEventListener("click", ()=>{ supAfterSave = true; openSupForm(null); });
+function renderPurPick(){
+  const q = (document.getElementById("ppSearch").value||"").trim().toLowerCase();
+  const list = DB.products.filter(p=>!q || p.name.toLowerCase().includes(q));
+  document.getElementById("ppList").innerHTML = list.length ? list.map(p=>`<button class="btn block" data-ppick="${p.id}">${esc(p.name)} — stok ${p.noStock?"∞":p.stock} • beli ${rp(p.cost||0)}</button>`).join("") : `<div class="empty">Tidak ditemukan.</div>`;
+}
+document.getElementById("purAddItem").addEventListener("click", ()=>{ document.getElementById("ppSearch").value=""; renderPurPick(); openModal("purPickModal"); });
+document.getElementById("ppSearch").addEventListener("input", renderPurPick);
+document.getElementById("ppList").addEventListener("click", e=>{
+  const b = e.target.closest("[data-ppick]"); if(!b) return;
+  const p = prodById(b.dataset.ppick); if(!p) return;
+  const ex = purCart.find(it=>it.productId===p.id);
+  if(ex) ex.qty += 1; else purCart.push({productId:p.id, name:p.name, qty:1, cost:p.cost||0});
+  closeModals(); openModal("purModal"); renderPurItems();
+});
+document.getElementById("purPaid").addEventListener("input", e=>{
+  const raw = e.target.value.replace(/[^\d]/g,"");
+  e.target.value = raw ? Number(raw).toLocaleString("id-ID") : "";
+});
+document.getElementById("purSave").addEventListener("click", ()=>{
+  const sup = supById(document.getElementById("purSup").value);
+  if(!sup){ dlgAlert("Pilih supplier dulu."); return; }
+  const items = purCart.filter(it=>it.qty > 0);
+  if(!items.length){ dlgAlert("Tambah minimal 1 produk."); return; }
+  const total = items.reduce((s,it)=>s + it.qty*it.cost, 0);
+  const paidRaw = parseInt((document.getElementById("purPaid").value||"").replace(/[^\d]/g,""), 10) || 0;
+  const pur = { id: uid(), ts: Date.now(), supId: sup.id, supName: sup.name,
+    items: items.map(it=>({...it})), total, pay: purPayMode,
+    due: purPayMode==="Hutang" ? (document.getElementById("purDue").value || "") : "",
+    payments: purPayMode==="Hutang" && paidRaw > 0 ? [{ts: Date.now(), amt: Math.min(paidRaw, total), method: "Tunai"}] : [] };
+  DB.purchases.push(pur);
+  items.forEach(it=>{
+    const p = prodById(it.productId); if(!p) return;
+    if(!p.noStock){ p.stock = (p.stock||0) + it.qty; DB.stockMoves.push({id:uid(), ts:Date.now(), productId:p.id, type:"in", qty:it.qty, note:"Pembelian — " + sup.name}); }
+    p.cost = it.cost;
+  });
+  save(); closeModals(); renderAll();
+  dlgAlert("Pembelian tersimpan. Stok bertambah.");
+});
+function renderPembelian(){
+  const list = [...(DB.purchases||[])].sort((a,b)=>b.ts-a.ts);
+  const totalDebt = list.reduce((s,p)=>s+purDebt(p),0);
+  const nowD = new Date();
+  const mStart = todayStr(new Date(nowD.getFullYear(), nowD.getMonth(), 1));
+  const monthTotal = list.filter(p=>todayStr(new Date(p.ts)) >= mStart).reduce((s,p)=>s+p.total,0);
+  document.getElementById("purSummary").innerHTML = [
+    ["Hutang supplier belum lunas", rp(totalDebt)], ["Pembelian bulan ini", rp(monthTotal)],
+  ].map(([l,v])=>`<div class="card stat"><div class="label">${l}</div><div class="value">${v}</div></div>`).join("");
+  const now = todayStr();
+  document.getElementById("purList").innerHTML = list.length ? list.map(p=>{
+    const debt = purDebt(p), over = debt > 0 && p.due && p.due < now;
+    const badge = debt <= 0 ? `<span class="badge">Lunas</span>` : `<span class="badge warn">${over?"Lewat tempo":"Hutang"} ${rp(debt)}</span>`;
+    return `<div class="card">
+      <div class="row wrap"><b>${esc(p.supName||"Supplier")}</b>${badge}<span class="spacer"></span><button class="btn sm" data-purview="${p.id}">Detail</button>${debt>0?`<button class="btn sm primary owner-only" data-purpay="${p.id}">Bayar</button>`:""}</div>
+      <div class="small muted" style="margin-top:4px">${new Date(p.ts).toLocaleDateString("id-ID")} • ${p.items.length} produk • ${esc(p.pay)}${p.due?" • Tempo "+esc(p.due):""}</div>
+      <div class="small" style="margin-top:2px">Total <b>${rp(p.total)}</b></div>
+    </div>`;
+  }).join("") : `<div class="empty card">Belum ada pembelian.</div>`;
+}
+function openPurPay(p){
+  document.getElementById("ppId").value = p.id;
+  document.getElementById("ppInfo").innerHTML = `<b>${esc(p.supName||"Supplier")}</b> — sisa hutang <b>${rp(purDebt(p))}</b>`;
+  document.getElementById("ppAmt").value = Number(purDebt(p)).toLocaleString("id-ID");
+  openModal("purPayModal");
+}
+function openPurDetail(p){
+  document.getElementById("pdId").value = p.id;
+  const debt = purDebt(p);
+  document.getElementById("pdInfo").innerHTML = `<b>${esc(p.supName||"Supplier")}</b> • ${new Date(p.ts).toLocaleString("id-ID")}<br>Total ${rp(p.total)} • ${esc(p.pay)}${p.due?" • Tempo "+esc(p.due):""} • Terbayar ${rp(purPaid(p))} • Sisa <b>${rp(debt)}</b>`;
+  document.getElementById("pdItems").innerHTML = `<table>${p.items.map(it=>`<tr><td>${esc(it.name)}</td><td class="num">${it.qty} × ${rp(it.cost)}</td><td class="num">${rp(it.qty*it.cost)}</td></tr>`).join("")}</table>`;
+  document.getElementById("pdPays").innerHTML = (p.payments||[]).length ? `<div class="small"><b>Riwayat bayar:</b><br>${p.payments.map(x=>`${new Date(x.ts).toLocaleDateString("id-ID")} — ${rp(x.amt)} (${esc(x.method||"Tunai")})`).join("<br>")}</div>` : "";
+  document.getElementById("pdPayBtn").style.display = debt > 0 ? "" : "none";
+  openModal("purDetailModal");
+}
+document.getElementById("purList").addEventListener("click", e=>{
+  const pay = e.target.closest("[data-purpay]"), vw = e.target.closest("[data-purview]");
+  if(pay){ const p = (DB.purchases||[]).find(x=>x.id===pay.dataset.purpay); if(p) openPurPay(p); }
+  if(vw){ const p = (DB.purchases||[]).find(x=>x.id===vw.dataset.purview); if(p) openPurDetail(p); }
+});
+document.getElementById("ppAmt").addEventListener("input", e=>{
+  const raw = e.target.value.replace(/[^\d]/g,"");
+  e.target.value = raw ? Number(raw).toLocaleString("id-ID") : "";
+});
+document.getElementById("ppSave").addEventListener("click", ()=>{
+  const p = (DB.purchases||[]).find(x=>x.id===document.getElementById("ppId").value); if(!p) return;
+  const amt = Math.min(parseInt((document.getElementById("ppAmt").value||"").replace(/[^\d]/g,""), 10) || 0, purDebt(p));
+  if(amt <= 0){ dlgAlert("Jumlah bayar tidak valid."); return; }
+  p.payments = p.payments || [];
+  p.payments.push({ts:Date.now(), amt, method:document.getElementById("ppMethod").value});
+  save(); closeModals(); renderAll();
+  dlgAlert(purDebt(p) > 0 ? "Pembayaran tercatat. Sisa " + rp(purDebt(p)) + "." : "Hutang sudah lunas.");
+});
+document.getElementById("pdPayBtn").addEventListener("click", ()=>{
+  const p = (DB.purchases||[]).find(x=>x.id===document.getElementById("pdId").value); if(p) openPurPay(p);
+});
+document.getElementById("pdDelBtn").addEventListener("click", async ()=>{
+  const p = (DB.purchases||[]).find(x=>x.id===document.getElementById("pdId").value); if(!p) return;
+  if(!await ownerGate("Hapus pembelian ini? Stok akan dikurangi kembali.")) return;
+  p.items.forEach(it=>{ const pr = prodById(it.productId); if(pr && !pr.noStock) pr.stock = Math.max(0, (pr.stock||0) - it.qty); });
+  DB.purchases = DB.purchases.filter(x=>x.id!==p.id);
+  save(); closeModals(); renderAll();
+});
+
 /* ============================================================ LAPORAN & ANALISA */
 const validTx = () => DB.transactions.filter(t=>!t.voided);
 function txInRange(from, to){ return validTx().filter(t=>{ const d=todayStr(new Date(t.ts)); return (!from||d>=from) && (!to||d<=to); }); }
+function repRange(){
+  let from = document.getElementById("repFrom").value, to = document.getElementById("repTo").value;
+  if(!from || !to){
+    const n = new Date();
+    from = todayStr(new Date(n.getFullYear(), n.getMonth(), 1)); to = todayStr(n);
+    document.getElementById("repFrom").value = from; document.getElementById("repTo").value = to;
+  }
+  return {from, to};
+}
+function hbarHTML(label, val, total){
+  const pct = total ? Math.round(val/total*100) : 0;
+  return `<div class="hbar"><div class="hb-top"><span>${esc(label)}</span><b>${rp(val)} • ${pct}%</b></div><div class="hb-track"><div class="hb-fill" style="width:${pct}%"></div></div></div>`;
+}
 function renderLaporan(){
-  const from = document.getElementById("repFrom").value, to = document.getElementById("repTo").value;
+  const {from, to} = repRange();
   const txs = txInRange(from, to);
-  const omzet = txs.reduce((s,t)=>s+t.total,0);
-  const laba = txs.reduce((s,t)=>s + t.items.reduce((a,it)=>a+(it.price-it.cost)*it.qty,0) - 0,0) - txs.reduce((s,t)=>s+(t.discount||0)*0,0);
-  const labaBersih = txs.reduce((s,t)=> s + t.items.reduce((a,it)=>a+(it.price-it.cost)*it.qty,0) * (t.subtotal? (t.total/t.subtotal):1), 0);
+  const dFrom = new Date(from + "T00:00:00"), dTo = new Date(to + "T00:00:00");
+  const len = Math.max(1, Math.round((dTo - dFrom) / 864e5) + 1);
+  const pTo = new Date(dFrom); pTo.setDate(pTo.getDate() - 1);
+  const pFrom = new Date(pTo); pFrom.setDate(pFrom.getDate() - (len - 1));
+  const prev = txInRange(todayStr(pFrom), todayStr(pTo));
+  const omzet = txs.reduce((s,t)=>s+t.total,0), prevOmzet = prev.reduce((s,t)=>s+t.total,0);
+  const growth = prevOmzet ? (omzet - prevOmzet) / prevOmzet * 100 : null;
+  const ratio = t => t.subtotal ? t.total / t.subtotal : 1;
+  const labaBersih = Math.round(txs.reduce((s,t)=> s + t.items.reduce((a,it)=>a+(it.price-it.cost)*it.qty,0) * ratio(t), 0));
+  const margin = omzet ? labaBersih / omzet * 100 : 0;
+  const disc = txs.reduce((s,t)=>s+(t.discount||0),0);
   document.getElementById("repStats").innerHTML = [
-    ["Omzet", rp(omzet)], ["Transaksi", txs.length], ["Laba Kotor (perkiraan)", rp(Math.round(labaBersih))],
-    ["Rata-rata / Transaksi", rp(txs.length? omzet/txs.length : 0)],
-  ].map(([l,v])=>`<div class="card stat"><div class="label">${l}</div><div class="value">${v}</div></div>`).join("");
+    ["Omzet", rp(omzet), growth === null ? "periode pertama" : `<span class="${growth>=0?"up":"down"}">${growth>=0?"▲":"▼"} ${Math.abs(growth).toFixed(0)}%</span> vs periode sebelumnya`],
+    ["Transaksi", txs.length, ""],
+    ["Laba Bersih", rp(labaBersih), "margin " + margin.toFixed(0) + "%"],
+    ["Rata-rata / Transaksi", rp(txs.length? Math.round(omzet/txs.length) : 0), ""],
+    ["Total Diskon", rp(disc), ""],
+  ].map(([l,v,sub])=>`<div class="card stat"><div class="label">${l}</div><div class="value">${v}</div>${sub?`<div class="sub">${sub}</div>`:""}</div>`).join("");
+  // tren omzet (harian bila <= 31 hari, mingguan bila lebih)
+  const bsize = len <= 31 ? 1 : 7, nb = Math.ceil(len / bsize), buckets = [];
+  for(let i=0;i<nb;i++){ const d = new Date(dFrom); d.setDate(d.getDate() + i*bsize); buckets.push({d, val:0}); }
+  txs.forEach(t=>{ const idx = Math.floor((new Date(todayStr(new Date(t.ts)) + "T00:00:00") - dFrom) / 864e5 / bsize); if(buckets[idx]) buckets[idx].val += t.total; });
+  const bmax = Math.max(...buckets.map(b=>b.val), 1);
+  document.getElementById("repTrend").innerHTML = buckets.map(b=>`
+    <div class="bar"><b>${b.val && b.val >= bmax*0.4? (b.val/1000).toFixed(0)+"rb" : ""}</b><i style="height:${Math.max(3, b.val/bmax*110)}px${b.val===bmax&&b.val?"":"; opacity:.45"}"></i><span>${b.d.getDate()}/${b.d.getMonth()+1}</span></div>`).join("");
+  // laba rugi
+  const sub = txs.reduce((s,t)=>s+(t.subtotal||0),0);
+  const hpp = Math.round(txs.reduce((s,t)=> s + t.items.reduce((a,it)=>a+it.cost*it.qty,0) * ratio(t), 0));
+  document.getElementById("repPL").innerHTML = `
+    <div class="plrow"><span>Pendapatan kotor</span><b>${rp(sub)}</b></div>
+    <div class="plrow"><span>Diskon</span><b>−${rp(disc)}</b></div>
+    <div class="plrow"><span>Pendapatan</span><b>${rp(omzet)}</b></div>
+    <div class="plrow"><span>HPP (modal barang)</span><b>${rp(hpp)}</b></div>
+    <div class="plrow total"><span>Laba Bersih</span><span>${rp(labaBersih)} <span class="sub" style="color:var(--muted); font-weight:600">(margin ${margin.toFixed(0)}%)</span></span></div>`;
+  // arus kas masuk
+  const cashIn = {};
+  txs.forEach(t=>{ if(t.pay !== "Piutang") cashIn[t.pay] = (cashIn[t.pay]||0) + t.total; });
+  let cicilan = 0;
+  validTx().filter(t=>t.pay==="Piutang" && t.payments).forEach(t=>t.payments.forEach(pm=>{ const d = todayStr(new Date(pm.ts)); if(d>=from && d<=to) cicilan += pm.amt; }));
+  const cashRows = Object.entries(cashIn).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="plrow"><span>${esc(k)}</span><b>${rp(v)}</b></div>`).join("");
+  const totalKas = Object.values(cashIn).reduce((s,v)=>s+v,0) + cicilan;
+  const purInRange = (DB.purchases||[]).filter(p=>{ const d = todayStr(new Date(p.ts)); return d>=from && d<=to; });
+  const purTunai = purInRange.filter(p=>p.pay!=="Hutang").reduce((s,p)=>s+p.total,0);
+  let bayarHutang = 0;
+  (DB.purchases||[]).filter(p=>p.pay==="Hutang" && p.payments).forEach(p=>p.payments.forEach(pm=>{ const d = todayStr(new Date(pm.ts)); if(d>=from && d<=to) bayarHutang += pm.amt; }));
+  document.getElementById("repCash").innerHTML = (cashRows || "") +
+    (cicilan?`<div class="plrow"><span>Cicilan piutang diterima</span><b>${rp(cicilan)}</b></div>`:"") +
+    `<div class="plrow"><span>Total Kas Masuk</span><b>${rp(totalKas)}</b></div>` +
+    (purTunai?`<div class="plrow"><span>Pembelian tunai (keluar)</span><b>−${rp(purTunai)}</b></div>`:"") +
+    (bayarHutang?`<div class="plrow"><span>Bayar hutang supplier (keluar)</span><b>−${rp(bayarHutang)}</b></div>`:"") +
+    `<div class="plrow total"><span>Kas Bersih</span><b>${rp(totalKas - purTunai - bayarHutang)}</b></div>`;
+  const hutangAll = (DB.purchases||[]).reduce((s,p)=>s+purDebt(p),0);
+  const overPur = (DB.purchases||[]).filter(p=>purDebt(p) > 0 && p.due && p.due < todayStr(new Date()));
+  document.getElementById("repPur").innerHTML = `
+    <div class="plrow"><span>Total pembelian (periode)</span><b>${rp(purInRange.reduce((s,p)=>s+p.total,0))}</b></div>
+    <div class="plrow"><span>Transaksi pembelian</span><b>${purInRange.length}</b></div>
+    <div class="plrow"><span>Hutang supplier belum lunas</span><b>${rp(hutangAll)}</b></div>
+    <div class="plrow"><span>Lewat tempo</span><b>${overPur.length} • ${rp(overPur.reduce((s,p)=>s+purDebt(p),0))}</b></div>`;
+  // piutang ringkasan
+  const debtTxs = validTx().filter(t=>t.pay==="Piutang" && txDebt(t) > 0);
+  const totalDebt = debtTxs.reduce((s,t)=>s+txDebt(t),0);
+  const todayS = todayStr(new Date());
+  const overdue = debtTxs.filter(t=>t.due && t.due < todayS);
+  const overdueRp = overdue.reduce((s,t)=>s+txDebt(t),0);
+  document.getElementById("repDebt").innerHTML = `
+    <div class="plrow"><span>Total belum lunas</span><b>${rp(totalDebt)}</b></div>
+    <div class="plrow"><span>Transaksi piutang aktif</span><b>${debtTxs.length}</b></div>
+    <div class="plrow"><span>Lewat tempo</span><b>${overdue.length} • ${rp(overdueRp)}</b></div>
+    <div class="plrow"><span>Diterima periode ini</span><b>${rp(cicilan)}</b></div>`;
+  // per metode + per kategori (bar persentase)
   const byPay = {};
   txs.forEach(t=>{ byPay[t.pay] = (byPay[t.pay]||0) + t.total; });
   document.getElementById("repByPay").innerHTML = Object.keys(byPay).length ?
-    `<table>${Object.entries(byPay).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="num">${rp(v)}</td></tr>`).join("")}</table>` : "Tidak ada data.";
+    Object.entries(byPay).sort((a,b)=>b[1]-a[1]).map(([k,v])=>hbarHTML(k, v, omzet)).join("") : "Tidak ada data.";
+  const byCat = {};
+  txs.forEach(t=>t.items.forEach(it=>{ const p = prodById(it.productId); const cn = p?catName(p.catId):"Lainnya"; byCat[cn] = (byCat[cn]||0) + it.price*it.qty; }));
+  const catTotal = Object.values(byCat).reduce((s,v)=>s+v,0);
+  document.getElementById("repByCat").innerHTML = Object.keys(byCat).length ?
+    Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>hbarHTML(k, v, catTotal)).join("") : "Tidak ada data.";
+  // per produk + laba
   const byProd = {};
-  txs.forEach(t=>t.items.forEach(it=>{ byProd[it.name] = byProd[it.name]||{qty:0, rev:0}; byProd[it.name].qty += it.qty; byProd[it.name].rev += it.price*it.qty; }));
-  const rows = Object.entries(byProd).sort((a,b)=>b[1].rev-a[1].rev);
+  txs.forEach(t=>t.items.forEach(it=>{ const o = byProd[it.name] = byProd[it.name]||{qty:0, rev:0, profit:0}; o.qty += it.qty; o.rev += it.price*it.qty; o.profit += (it.price-it.cost)*it.qty*ratio(t); }));
+  const rows = Object.entries(byProd).sort((a,b)=>b[1].rev-a[1].rev).slice(0, 15);
   document.getElementById("repByProduct").innerHTML = rows.length ?
-    `<table>${rows.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="num">${v.qty} terjual</td><td class="num">${rp(v.rev)}</td></tr>`).join("")}</table>` : "Tidak ada data.";
+    `<table><tr><td><b>Produk</b></td><td class="num"><b>Qty</b></td><td class="num"><b>Pendapatan</b></td><td class="num"><b>Laba</b></td></tr>${rows.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="num">${v.qty}</td><td class="num">${rp(v.rev)}</td><td class="num">${rp(Math.round(v.profit))}</td></tr>`).join("")}</table>` : "Tidak ada data.";
+  // insight pemilik
+  const ins = [];
+  if(growth !== null && txs.length) ins.push([growth>=0?"📈":"📉", `Omzet ${growth>=0?"naik":"turun"} <b>${Math.abs(growth).toFixed(0)}%</b> dibanding periode sebelumnya (${rp(prevOmzet)}).`]);
+  const topProfit = Object.entries(byProd).sort((a,b)=>b[1].profit-a[1].profit)[0];
+  if(topProfit && topProfit[1].profit > 0){ const p0 = prodById((txs.flatMap(t=>t.items).find(it=>it.name===topProfit[0])||{}).productId); const mg = topProfit[1].rev ? topProfit[1].profit/topProfit[1].rev*100 : 0; ins.push(["🏆", `<b>${esc(topProfit[0])}</b> paling menguntungkan: laba ${rp(Math.round(topProfit[1].profit))} (margin ${mg.toFixed(0)}%). Pertahankan stoknya.`]); }
+  const topCat = Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];
+  if(topCat && catTotal) ins.push(["🧩", `Kategori <b>${esc(topCat[0])}</b> menyumbang ${Math.round(topCat[1]/catTotal*100)}% penjualan produk periode ini.`]);
+  if(txs.length){
+    const hc = {}, dc = {};
+    txs.forEach(t=>{ const d = new Date(t.ts); hc[d.getHours()] = (hc[d.getHours()]||0)+1; const dn = d.toLocaleDateString("id-ID",{weekday:"long"}); dc[dn] = (dc[dn]||0)+1; });
+    const bh = Object.entries(hc).sort((a,b)=>b[1]-a[1])[0], bd = Object.entries(dc).sort((a,b)=>b[1]-a[1])[0];
+    if(bh && bd) ins.push(["⏰", `Jam tersibuk <b>${String(bh[0]).padStart(2,"0")}.00</b> dan hari tersibuk <b>${bd[0]}</b> — siapkan stok & kasir ekstra.`]);
+  }
+  if(overdue.length) ins.push(["⚠️", `<b>${overdue.length} piutang lewat tempo</b> senilai ${rp(overdueRp)} — segera tindak lanjuti penagihannya.`]);
+  const soldAll = {}; validTx().forEach(t=>t.items.forEach(it=>{ soldAll[it.productId] = (soldAll[it.productId]||0)+it.qty; }));
+  const crit = DB.products.filter(p=>!p.noStock && p.stock <= (DB.settings.lowStock||3) && (soldAll[p.id]||0) > 0).sort((a,b)=>(soldAll[b.id]||0)-(soldAll[a.id]||0))[0];
+  if(crit) ins.push(["📦", `<b>${esc(crit.name)}</b> laris tapi stok tinggal ${crit.stock} — waktunya restok.`]);
+  document.getElementById("repInsights").innerHTML = ins.length ?
+    ins.map(([ic, tx])=>`<div class="insrow"><span class="ic">${ic}</span><span>${tx}</span></div>`).join("") :
+    `<div class="insrow"><span class="ic">💡</span><span>Belum ada data yang cukup untuk dianalisa pada periode ini.</span></div>`;
 }
 document.getElementById("repApply").onclick = renderLaporan;
 function download(name, content, type){
@@ -2719,9 +3175,13 @@ document.getElementById("repCsv").onclick = ()=>{
 function renderAnalisa(){
   const txs = validTx();
   const omzet = txs.reduce((s,t)=>s+t.total,0);
+  const dayCount = {};
+  txs.forEach(t=>{ const dn = new Date(t.ts).toLocaleDateString("id-ID",{weekday:"long"}); dayCount[dn] = (dayCount[dn]||0)+1; });
+  const busyDay = Object.entries(dayCount).sort((a,b)=>b[1]-a[1])[0];
   document.getElementById("anaStats").innerHTML = [
     ["Total Omzet (semua data)", rp(omzet)], ["Total Transaksi", txs.length],
     ["Rata-rata Nilai Transaksi", rp(txs.length? omzet/txs.length:0)], ["Jenis Produk", DB.products.length],
+    ["Hari Tersibuk", busyDay? busyDay[0] : "-"],
   ].map(([l,v])=>`<div class="card stat"><div class="label">${l}</div><div class="value">${v}</div></div>`).join("");
   // tren 7 hari
   const days = [];
@@ -2927,7 +3387,7 @@ function renderBeranda(){
   const ds = document.getElementById("drawerShop"); if(ds) ds.textContent = DB.settings.shopName;
   const dm = document.getElementById("drawerMail"); if(dm) dm.textContent = currentUser ? currentUser.email : "";
 }
-function renderAll(){ renderBeranda(); renderKasir(); renderProduk(); renderRiwayat(); renderLaporan(); renderAnalisa(); renderPelanggan(); renderPiutang(); }
+function renderAll(){ renderBeranda(); renderKasir(); renderProduk(); renderRiwayat(); renderLaporan(); renderAnalisa(); renderPelanggan(); renderPiutang(); renderSupplier(); renderPembelian(); }
 /* ---------- Ikatan gerbang masuk ---------- */
 document.getElementById("tabLogin").addEventListener("click", ()=>setAuthMode("login"));
 document.getElementById("tabRegister").addEventListener("click", ()=>setAuthMode("register"));
@@ -3080,7 +3540,7 @@ function applyRole(){
       if(el) el.style.display = "none";
     });
     const active = document.querySelector("nav.tabs button.active");
-    if(active && ["beranda","riwayat","laporan","analisa","pengaturan","pelanggan","piutang","langganan"].includes(active.dataset.page)){
+    if(active && ["beranda","riwayat","laporan","analisa","pengaturan","pelanggan","piutang","pembelian","supplier","langganan"].includes(active.dataset.page)){
       document.querySelector('button[data-page="kasir"]').click();
     }
   } else {
