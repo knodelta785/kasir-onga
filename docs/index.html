@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#2563eb">
 <script>
 /* Anti-cache: bila ada versi web lebih baru, muat ulang sekali ke versi itu */
-var APP_BUILD = "20261128-10";
+var APP_BUILD = "20261129-14";
 (function(){
   try{
     fetch("version.json?cb=" + Date.now(), {cache:"no-store"}).then(function(r){ return r.json(); }).then(function(v){
@@ -146,6 +146,8 @@ td.num,th.num{text-align:right; white-space:nowrap}
 .bars .bar{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0}
 .bars .bar i{display:block; width:100%; max-width:38px; background:var(--accent); border-radius:6px 6px 0 0}
 .bars .bar span{font-size:11px; color:var(--muted); white-space:nowrap}
+.bars.swipe{overflow-x:auto; scrollbar-width:thin; padding-bottom:6px}
+.bars.swipe .bar{flex:0 0 36px}
 .bars .bar b{font-size:11px}
 
 /* Gerbang masuk / daftar (multi-toko) — tampilan premium */
@@ -561,6 +563,8 @@ body[data-role="kasir"] .home-tile[data-goto="supplier"]{display:none}
 .up{color:#16a34a; font-weight:700}
 .down{color:#dc2626; font-weight:700}
 .stat .sub{font-size:12px; margin-top:3px; color:var(--muted)}
+.bars .bar b{font-size:11px; white-space:nowrap}
+.bars .bar span{white-space:nowrap}
 /* ===== Harga grosir bertingkat + struk JPG (build 20261128-08) ===== */
 .trow{display:flex; gap:8px; margin-bottom:8px}
 .trow input{flex:1; min-width:0}
@@ -939,7 +943,7 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
     </div>
     <div class="statgrid" style="margin-top:14px" id="repStats"></div>
     <div class="card insight" style="margin-top:12px"><h3 style="margin-top:0">💡 Insight Pemilik</h3><div id="repInsights"></div></div>
-    <div class="card" style="margin-top:12px"><h3 style="margin-top:0">Tren Omzet</h3><div class="bars" id="repTrend"></div></div>
+    <div class="card" style="margin-top:12px"><h3 style="margin-top:0">Tren Omzet</h3><div class="small muted" id="repTrendCap" style="margin:-8px 0 2px"></div><div class="bars swipe" id="repTrend"></div></div>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-top:12px">
       <div class="card"><h3 style="margin-top:0">Laba Rugi</h3><div id="repPL"></div></div>
       <div class="card"><h3 style="margin-top:0">Arus Kas Masuk</h3><div id="repCash"></div></div>
@@ -964,7 +968,7 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
     </div>
     <div class="statgrid" style="margin-top:14px" id="anaStats"></div>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); margin-top:12px">
-      <div class="card"><h3 style="margin-top:0">Tren Omzet 7 Hari Terakhir</h3><div class="bars" id="anaTrend"></div></div>
+      <div class="card"><h3 style="margin-top:0">Tren Omzet 7 Hari Terakhir</h3><div class="small muted" id="anaTrendCap" style="margin:-8px 0 2px"></div><div class="bars" id="anaTrend"></div></div>
       <div class="card"><h3 style="margin-top:0">Jam Ramai</h3><div id="anaHours"></div></div>
       <div class="card"><h3 style="margin-top:0">Produk Terlaris</h3><div id="anaTop"></div></div>
       <div class="card"><h3 style="margin-top:0">Per Kategori</h3><div id="anaCat"></div></div>
@@ -3069,8 +3073,11 @@ function renderLaporan(){
   for(let i=0;i<nb;i++){ const d = new Date(dFrom); d.setDate(d.getDate() + i*bsize); buckets.push({d, val:0}); }
   txs.forEach(t=>{ const idx = Math.floor((new Date(todayStr(new Date(t.ts)) + "T00:00:00") - dFrom) / 864e5 / bsize); if(buckets[idx]) buckets[idx].val += t.total; });
   const bmax = Math.max(...buckets.map(b=>b.val), 1);
-  document.getElementById("repTrend").innerHTML = buckets.map(b=>`
-    <div class="bar"><b>${b.val && b.val >= bmax*0.4? (b.val/1000).toFixed(0)+"rb" : ""}</b><i style="height:${Math.max(3, b.val/bmax*110)}px${b.val===bmax&&b.val?"":"; opacity:.45"}"></i><span>${b.d.getDate()}/${b.d.getMonth()+1}</span></div>`).join("");
+  const peak = buckets.reduce((a,b)=> b.val > (a?a.val:0) ? b : a, null);
+  document.getElementById("repTrendCap").textContent = peak && peak.val ? "Puncak: " + rp(peak.val) + " • " + peak.d.toLocaleDateString("id-ID", {day:"numeric", month:"short"}) : "";
+  document.getElementById("repTrend").innerHTML = buckets.map((b,i)=>`
+    <div class="bar"><b></b><i style="height:${Math.max(3, b.val/bmax*110)}px${b.val===bmax&&b.val?"":"; opacity:.45"}"></i><span>${b.d.getDate() + "/" + (b.d.getMonth()+1)}</span></div>`).join("");
+  const rtEl = document.getElementById("repTrend"); rtEl.scrollLeft = rtEl.scrollWidth;
   // laba rugi
   const sub = txs.reduce((s,t)=>s+(t.subtotal||0),0);
   const hpp = Math.round(txs.reduce((s,t)=> s + t.items.reduce((a,it)=>a+it.cost*it.qty,0) * ratio(t), 0));
@@ -3189,7 +3196,9 @@ function renderAnalisa(){
   const vals = days.map(d=> txs.filter(t=>todayStr(new Date(t.ts))===todayStr(d)).reduce((s,t)=>s+t.total,0));
   const max = Math.max(...vals, 1);
   document.getElementById("anaTrend").innerHTML = days.map((d,i)=>`
-    <div class="bar"><b>${vals[i]? (vals[i]/1000).toFixed(0)+"rb" : ""}</b><i style="height:${Math.max(3, vals[i]/max*110)}px"></i><span>${d.toLocaleDateString("id-ID",{weekday:"short"})}</span></div>`).join("");
+    <div class="bar"><b></b><i style="height:${Math.max(3, vals[i]/max*110)}px"></i><span>${d.toLocaleDateString("id-ID",{weekday:"short"})}</span></div>`).join("");
+  const pk = vals.indexOf(Math.max(...vals));
+  document.getElementById("anaTrendCap").textContent = vals[pk] ? "Puncak: " + rp(vals[pk]) + " • " + days[pk].toLocaleDateString("id-ID", {weekday:"long", day:"numeric", month:"short"}) : "";
   // jam ramai
   const hours = {};
   txs.forEach(t=>{ const h = new Date(t.ts).getHours(); hours[h]=(hours[h]||0)+1; });
