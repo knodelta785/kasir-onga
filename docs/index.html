@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#2563eb">
 <script>
 /* Anti-cache: bila ada versi web lebih baru, muat ulang sekali ke versi itu */
-var APP_BUILD = "20261128-07";
+var APP_BUILD = "20261128-08";
 (function(){
   try{
     fetch("version.json?cb=" + Date.now(), {cache:"no-store"}).then(function(r){ return r.json(); }).then(function(v){
@@ -537,6 +537,10 @@ html[data-theme="dark"] #themeBtn .ic-moon{display:none}
 .paygrid button{color:var(--text)}
 .qtyctrl button{color:var(--text)}
 ::placeholder{color:var(--muted); opacity:.8}
+/* ===== Harga grosir bertingkat + struk JPG (build 20261128-08) ===== */
+.trow{display:flex; gap:8px; margin-bottom:8px}
+.trow input{flex:1; min-width:0}
+.trow button{flex:none}
 /* menu titik-tiga produk */
 .prodrow{position:relative}
 .pmenu{position:absolute; right:10px; top:54px; z-index:30; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 28px rgba(15,23,42,.18); padding:5px; display:none; min-width:150px}
@@ -1208,6 +1212,7 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
     <div class="grid" style="margin-top:14px">
       <button class="btn primary block" id="printReceiptBtn">🖨 Cetak Struk</button>
       <button class="btn green block" id="waReceiptBtn">💬 Kirim via WhatsApp</button>
+      <button class="btn block" id="jpgReceiptBtn">📷 Bagikan JPG</button>
       <button class="btn block" data-close>Tutup</button>
     </div>
   </div>
@@ -1234,6 +1239,9 @@ nav.tabs .dfoot{margin-top:auto; padding:12px 16px; border-top:1px solid var(--b
       <div style="flex:1"><label>Satuan</label><input id="pmUnit" placeholder="pcs"></div>
     </div>
     <label class="nostock-row"><input type="checkbox" id="pmNoStock"> Tidak Pakai Stok</label>
+    <label style="margin-top:14px">Harga Grosir (opsional)</label>
+    <div id="pmTiers"></div>
+    <button type="button" class="btn sm" id="pmTierAdd">+ Tambah Tingkat</button>
     <div class="photorow">
       <img id="pmPhotoPreview" alt="">
       <button type="button" class="btn sm" id="pmPhotoBtn">📷 Tambah Foto</button>
@@ -1833,7 +1841,7 @@ function renderKasir(){
     return `<button class="prow ${p.stock<=0 && !p.noStock?"out":""}" data-add="${p.id}">
       ${thumb}
       <div class="pinfo"><div class="nm">${esc(p.name)}</div>
-      <div class="meta">${p.noStock ? "Tidak Pakai Stok" : "Sisa " + p.stock + " " + esc(p.unit||"")} • ${rp(p.price)}</div></div>
+      <div class="meta">${p.noStock ? "Tidak Pakai Stok" : "Sisa " + p.stock + " " + esc(p.unit||"")} • ${rp(p.price)}${p.tiers&&p.tiers.length ? " • Grosir @" + p.tiers[0].min + " " + rp(p.tiers[0].price) : ""}</div></div>
       ${inCart?`<span class="stepper"><span class="stbtn" data-dec="${p.id}">−</span><span class="stqty">${inCart.qty}</span><span class="stbtn" data-inc="${p.id}">+</span></span>`:""}
     </button>`;
   };
@@ -1853,7 +1861,7 @@ function renderKasir(){
   box.innerHTML = cart.length ? cart.map(c=>{
     const p = prodById(c.productId); if(!p) return "";
     return `<div class="cart-item">
-      <div class="nm">${esc(p.name)}<div class="muted small">${rp(p.price)} × ${c.qty} = ${rp(p.price*c.qty)}</div></div>
+      <div class="nm">${esc(p.name)}<div class="muted small">${rp(effPrice(p,c.qty))} × ${c.qty} = ${rp(effPrice(p,c.qty)*c.qty)}${effPrice(p,c.qty)!==p.price?` <b style="color:#16a34a">Grosir</b>`:""}</div></div>
       <div class="qtyctrl">
         <button data-dec="${p.id}">−</button><b>${c.qty}</b><button data-inc="${p.id}">+</button>
       </div>
@@ -1868,8 +1876,14 @@ function discountValue(){
   const subtotal = cart.reduce((s,c)=>{ const p=prodById(c.productId); return s+(p?p.price*c.qty:0); },0);
   return document.getElementById("discountType").value==="pct" ? Math.round(subtotal*v/100) : v;
 }
+function effPrice(p, qty){
+  if(!p) return 0;
+  let pr = p.price;
+  if(p.tiers) p.tiers.forEach(t=>{ if(qty >= t.min) pr = t.price; });
+  return pr;
+}
 function calcCart(){
-  const subtotal = cart.reduce((s,c)=>{ const p=prodById(c.productId); return s+(p?p.price*c.qty:0); },0);
+  const subtotal = cart.reduce((s,c)=>{ const p=prodById(c.productId); return s+(p?effPrice(p,c.qty)*c.qty:0); },0);
   const disc = Math.min(discountValue(), subtotal);
   const total = subtotal - disc;
   document.getElementById("ctSubtotal").textContent = rp(subtotal);
@@ -2040,7 +2054,7 @@ document.getElementById("payBtn").onclick = ()=>{
     if(!cartCust){ dlgAlert("Pilih pelanggan dulu untuk piutang."); openCustPick(); return; }
     cash = Math.min(debtPaidVal(), total);
   } else cash = total;
-  const items = cart.map(c=>{ const p=prodById(c.productId); return {productId:p.id, name:p.name, price:p.price, cost:p.cost, qty:c.qty}; });
+  const items = cart.map(c=>{ const p=prodById(c.productId); return {productId:p.id, name:p.name, price:effPrice(p,c.qty), cost:p.cost, qty:c.qty}; });
   const tx = {id:uid(), ts:Date.now(), items, subtotal, discount:disc, total, pay:payMethod, cash, change, voided:false};
   if(cartCust){ tx.custId = cartCust.id; tx.custName = cartCust.name; }
   if(payMethod==="Piutang"){
@@ -2071,6 +2085,7 @@ function receiptText(tx){
   return lines.join("\n");
 }
 function showReceipt(tx){
+  lastTx = tx;
   const s = DB.settings;
   document.getElementById("receiptBox").innerHTML = `
     ${s.logo?`<div class="c"><img src="${s.logo}" alt="" style="width:110px; height:110px; object-fit:cover; border-radius:12px"></div>`:""}
@@ -2098,6 +2113,69 @@ document.getElementById("waReceiptBtn").onclick = ()=>{
   if(!lastTx) return;
   window.open("https://wa.me/?text=" + encodeURIComponent(receiptText(lastTx)), "_blank");
 };
+document.getElementById("jpgReceiptBtn").onclick = ()=>{ if(lastTx) shareReceiptJpg(lastTx); };
+function shareReceiptJpg(tx){
+  const s = DB.settings;
+  const rows = [];
+  const C = (t, o) => rows.push(Object.assign({t, align:"c"}, o||{}));
+  const L = (t, o) => rows.push(Object.assign({t, align:"l"}, o||{}));
+  const B = (lt, rt, o) => rows.push(Object.assign({lt, rt, align:"b"}, o||{}));
+  const DASH = "LINE";
+  C(s.shopName, {bold:1, size:27});
+  if(s.shopAddr) C(s.shopAddr, {size:19});
+  C("WA: " + s.shopWa, {size:19});
+  L(DASH, {size:15});
+  C(new Date(tx.ts).toLocaleString("id-ID"), {size:19});
+  L(DASH, {size:15});
+  let tq = 0;
+  tx.items.forEach((it, i)=>{
+    tq += it.qty;
+    let nm = (i+1) + ". " + it.name; if(nm.length > 36) nm = nm.slice(0, 35) + "…";
+    L(nm, {bold:1, size:20});
+    B("   " + it.qty + " x " + rp(it.price), rp(it.price*it.qty), {size:20});
+  });
+  L(DASH, {size:15});
+  B("Total QTY: " + tq, "", {size:19});
+  B("Subtotal", rp(tx.subtotal), {size:20});
+  if(tx.discount) B("Diskon", "-" + rp(tx.discount), {size:20});
+  B("Total", rp(tx.total), {bold:1, size:23});
+  if(tx.custName) B("Pelanggan", tx.custName, {size:19});
+  B(tx.pay, rp(tx.cash), {size:20});
+  if(tx.pay === "Piutang"){ B("Sisa piutang", rp(txDebt(tx)), {size:20}); B("Jatuh tempo", tx.due || "-", {size:19}); }
+  else B("Kembalian", rp(tx.change), {size:20});
+  L(DASH, {size:15});
+  if(tx.pay === "Piutang" && txDebt(tx) > 0) C("Bukan Bukti Pembayaran", {bold:1, size:20});
+  C(s.receiptFooter, {size:19});
+  const W = 640, M = 34, LH = 31, logoH = s.logo ? 128 : 0;
+  const cv = document.createElement("canvas");
+  cv.width = W; cv.height = logoH + rows.length * LH + 56;
+  const x = cv.getContext("2d");
+  x.fillStyle = "#ffffff"; x.fillRect(0, 0, cv.width, cv.height);
+  x.fillStyle = "#111111"; x.textBaseline = "middle";
+  let y = 30;
+  const draw = ()=>{
+    rows.forEach(r=>{
+      if(r.t === "LINE"){ x.save(); x.strokeStyle = "#999"; x.setLineDash([6, 6]); x.beginPath(); x.moveTo(M, y); x.lineTo(W - M, y); x.stroke(); x.restore(); y += LH; return; }
+      x.font = (r.bold ? "700 " : "400 ") + r.size + "px Arial";
+      if(r.align === "c"){ x.textAlign = "center"; x.fillText(r.t, W/2, y); }
+      else if(r.align === "b"){ x.textAlign = "left"; x.fillText(r.lt, M, y); x.textAlign = "right"; x.fillText(r.rt, W-M, y); }
+      else { x.textAlign = "left"; x.fillText(r.t, M, y); }
+      y += LH;
+    });
+    cv.toBlob(blob=>{
+      const name = "struk-" + new Date(tx.ts).toISOString().slice(0, 10) + ".jpg";
+      const file = new File([blob], name, {type:"image/jpeg"});
+      if(navigator.canShare && navigator.canShare({files:[file]})){ navigator.share({files:[file]}).catch(()=>{}); }
+      else { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000); }
+    }, "image/jpeg", 0.92);
+  };
+  if(s.logo){
+    const img = new Image();
+    img.onload = ()=>{ x.drawImage(img, W/2 - 52, 14, 104, 104); y += logoH; draw(); };
+    img.onerror = draw;
+    img.src = s.logo;
+  } else draw();
+}
 
 /* ============================================================ PRODUK */
 document.getElementById("lowStockBox").addEventListener("click", e=>{
@@ -2150,6 +2228,22 @@ document.getElementById("pmCatChips").addEventListener("click", e=>{
 });
 document.getElementById("pmCat").addEventListener("input", renderCatChips);
 document.getElementById("pmNoStock").addEventListener("change", e=>{ document.getElementById("pmStock").disabled = e.target.checked; });
+let pmTiers = [];
+function pmTiersClean(){
+  return pmTiers.map(t=>({min:parseInt(t.min)||0, price:parseInt(t.price)||0})).filter(t=>t.min>=2 && t.price>0).sort((a,b)=>a.min-b.min);
+}
+function renderPmTiers(){
+  document.getElementById("pmTiers").innerHTML = pmTiers.map((t,i)=>`<div class="trow"><input type="number" min="2" placeholder="Min qty" value="${t.min}"><input type="number" min="0" placeholder="Harga per item (Rp)" value="${t.price}"><button type="button" class="btn sm red" data-tdel="${i}">✕</button></div>`).join("");
+  document.querySelectorAll("#pmTiers .trow").forEach((row, i)=>{
+    row.children[0].addEventListener("input", e=>{ pmTiers[i].min = e.target.value; });
+    row.children[1].addEventListener("input", e=>{ pmTiers[i].price = e.target.value; });
+  });
+}
+document.getElementById("pmTierAdd").onclick = ()=>{ pmTiers.push({min:"", price:""}); renderPmTiers(); };
+document.getElementById("pmTiers").addEventListener("click", e=>{
+  const d = e.target.closest("[data-tdel]"); if(!d) return;
+  pmTiers.splice(+d.dataset.tdel, 1); renderPmTiers();
+});
 /* ----- foto produk: crop dulu, lalu kompres sekecil mungkin tapi tetap jelas ----- */
 let pmPhotoData = "";
 function pmPhotoSync(){
@@ -2187,6 +2281,7 @@ document.getElementById("addProductBtn").onclick = ()=>{
   ["pmId","pmName","pmSku","pmBarcode","pmPrice","pmCost","pmStock"].forEach(id=>document.getElementById(id).value="");
   document.getElementById("pmNoStock").checked = false; document.getElementById("pmStock").disabled = false;
   pmPhotoData = ""; pmPhotoSync();
+  pmTiers = []; renderPmTiers();
   document.getElementById("pmEmoji").value = "📦"; document.getElementById("pmUnit").value = "pcs";
   fillCatSelect(document.getElementById("pmCat"), DB.categories[0]?.id);
   renderBarcodePreview();
@@ -2202,6 +2297,7 @@ document.getElementById("productTable").addEventListener("click", e=>{
     document.getElementById("pmCost").value = p.cost; document.getElementById("pmStock").value = p.stock;
     document.getElementById("pmNoStock").checked = !!p.noStock; document.getElementById("pmStock").disabled = !!p.noStock;
     pmPhotoData = p.img || ""; pmPhotoSync();
+    pmTiers = (p.tiers||[]).map(t=>({min:t.min, price:t.price})); renderPmTiers();
     document.getElementById("pmEmoji").value = p.emoji||"📦"; document.getElementById("pmUnit").value = p.unit||"pcs";
     fillCatSelect(document.getElementById("pmCat"), p.catId);
     renderBarcodePreview();
@@ -2393,7 +2489,7 @@ document.getElementById("pmSave").onclick = ()=>{
     emoji:document.getElementById("pmEmoji").value.trim()||"📦",
     price:parseFloat(document.getElementById("pmPrice").value)||0, cost:parseFloat(document.getElementById("pmCost").value)||0,
     stock:parseInt(document.getElementById("pmStock").value)||0, unit:document.getElementById("pmUnit").value.trim()||"pcs",
-    noStock:document.getElementById("pmNoStock").checked, img:pmPhotoData||""};
+    noStock:document.getElementById("pmNoStock").checked, tiers:pmTiersClean(), img:pmPhotoData||""};
   let barcode = document.getElementById("pmBarcode").value.trim();
   if(!data.sku || !barcode){
     let seq = nextSeq(), guard = 0;
